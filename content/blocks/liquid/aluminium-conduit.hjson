@@ -1,0 +1,16 @@
+type: Conduit
+health: 140
+
+solid: true
+floating: true
+liquidCapacity: 23
+liquidPressure: 10
+leakResistance: 10
+
+requirements: [
+  metaglass/10
+  silicon/5
+  aluminium/8
+  blue_thorium/1
+]
+category: liquid

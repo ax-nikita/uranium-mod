@@ -1,0 +1,26 @@
+type: genericSmelter
+health: 130
+size: 3
+craftTime: 600
+consumes: {
+ power: 6
+ liquid: thorium_oil/4
+ items: {
+  items: [
+   lead/680
+  ]
+ }
+}
+outputLiquid: iridium_oil/240
+requirements: [
+plastanium/200
+titanium/400
+aluminium/130
+order_core/4
+]
+liquidCapacity: 1000
+itemCapacity: 1200
+category: crafting
+updateEffect: purify 
+updateEffectChance: 0.02
+

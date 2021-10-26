@@ -1,0 +1,27 @@
+health: 60
+size: 2
+requirements: [
+copper/30
+lead/50
+graphite/12
+]  
+hasPower: true
+hasItems: true
+hasLiquids: false
+craftTime: 55
+consumes: {
+  power: 0.5
+  items:{
+    items:[
+      graphite/1
+      lead/2
+      sand/4
+    ]
+  }
+}
+updateEffect: smelt
+category: crafting
+idleSoundVolume: 0.7
+idleSound: conveyor
+itemCapacity: 10
+outputItem: beton/5

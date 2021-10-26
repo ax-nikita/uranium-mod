@@ -1,0 +1,17 @@
+size: 2
+health: 85
+consumes: {
+  powerBuffered: 750
+}
+hasItems: true
+itemCapacity: 20
+consumesPower: true
+outputsPower: true
+requirements: [
+  aluminium/850
+  titanium/330
+  graphite/75
+  silicon/30
+  blue_thorium/12
+]
+category: power

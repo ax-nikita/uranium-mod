@@ -1,0 +1,5 @@
+size: 1
+requirements: [
+  beton/6
+]
+category: defense

@@ -1,0 +1,5 @@
+{
+	"name": "Stone wall",
+	"type": "StaticWall",
+	"variants": 3
+}

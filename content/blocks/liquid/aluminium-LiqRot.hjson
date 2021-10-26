@@ -1,0 +1,12 @@
+type: LiquidRouter
+health: 120
+liquidCapacity: 23
+liquidPressure: 10
+leakResistance: 10
+requirements: [
+  metaglass/12
+  silicon/6
+  aluminium/10
+  blue_thorium/1
+]
+category: liquid

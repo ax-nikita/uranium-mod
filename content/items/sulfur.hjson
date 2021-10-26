@@ -1,0 +1,6 @@
+type: Item
+name: Sulfur
+description: Used as an oxidizing agent or as an explosive.
+hardness: 2
+color: ebeb00
+flammability: 0.65

@@ -1,0 +1,140 @@
+[b]ATTENTION![/b] The night map is hard, which means be prepared for difficulties)
+Wave to Win: 561
+Last Wave: 7500
+
+The maximum level of turrets at the moment is 15. Here you can familiarize yourself with the parameters that increase depending on the level.
+
+[b]1 level (500exp until next)[/b]
+
+        Reload multiplier: 100%
+        Health: 100%
+        Luck: 0
+        Update ammo quality: 0
+        Health in the shield: 0
+        PowerShots(plasm turrets): 0
+
+[b]2 level (750exp until next)[/b]
+
+        Reload multiplier: 102%
+        Health: 110%
+        Luck: 0
+        Update ammo quality: 0
+        Health in the shield: 5%
+        PowerShots(plasm turrets): 0
+
+[b]3 level (1 000exp until next)[/b]
+
+        Reload multiplierr: 104%
+        Health: 120%
+        Luck: 1
+        Update ammo quality: 0
+        Health in the shield: 5%,
+        PowerShots(plasm turrets): 0
+
+[b]4 level (1 250exp until next)[/b]
+
+        Reload multiplier: 110%
+        Health: 130%
+        Luck: 1
+        Update ammo quality: 1
+        Health in the shield: 10%,
+        PowerShots(plasm turrets): 5
+
+[b]5 level (1 500exp until next)[/b]
+
+        Reload multiplier: 115%
+        Health: 130%
+        Luck: 2
+        Update ammo quality: 1
+        Health in the shield: 10%,
+        PowerShots(plasm turrets): 5
+
+[b]6 level (2 000exp until next)[/b]
+
+        Reload multiplier: 120%
+        Health: 140%
+        Luck: 2
+        Update ammo quality: 1
+        Health in the shield: 10%,
+        PowerShots(plasm turrets): 5
+
+[b]7 level (2 500exp until next)[/b]
+
+        Reload multiplier: 125%
+        Health: 140%
+        Luck: 3
+        Update ammo quality: 1
+        Health in the shield: 10%,
+        PowerShots(plasm turrets): 5
+
+[b]8 level (3 250exp until next)[/b]
+
+        Reload multiplier: 130%
+        Health: 140%
+        Luck: 3
+        Update ammo quality: 1
+        Health in the shield: 15%,
+        PowerShots(plasm turrets): 5
+
+[b]9 level (5 000exp until next)[/b]
+
+        Reload multiplier: 135%
+        Health: 140%
+        Luck: 4
+        Update ammo quality: 1
+        Health in the shield: 20%,
+        PowerShots(plasm turrets): 5
+
+[b]10 level (7 000exp until next)[/b]
+
+        Reload multiplier: 140%
+        Health: 150%
+        Luck: 5
+        Update ammo quality: 2
+        Health in the shield: 20%,
+        PowerShots(plasm turrets): 10
+
+[b]11 level (10 000exp until next)[/b]
+
+        Reload multiplier: 150%
+        Health: 160%
+        Luck: 6
+        Update ammo quality: 2
+        Health in the shield: 25%,
+        PowerShots(plasm turrets): 10
+
+[b]12 level (12 000exp until next)[/b]
+
+        Reload multiplier: 160%
+        Health: 170%
+        Luck: 7
+        Update ammo quality: 2
+        Health in the shield: 25%,
+        PowerShots(plasm turrets): 15
+
+[b]13 level (15 000exp until next)[/b]
+
+        Reload multiplier: 170%
+        Health: 180%
+        Luck: 8
+        Update ammo quality: 2
+        Health in the shield: 30%,
+        PowerShots(plasm turrets): 15
+
+[b]14 level (20 000exp until next)[/b]
+
+        Reload multiplier: 180%
+        Health: 190%
+        Luck: 9
+        Update ammo quality: 2
+        Health in the shield: 35%,
+        PowerShots(plasm turrets): 15
+
+[b]15 level - max level[/b]
+
+        Reload multiplier: 200%
+        Health: 200%
+        Luck: 10
+        Update ammo quality: 3
+        Health in the shield: 40%,
+        PowerShots(plasm turrets): 20

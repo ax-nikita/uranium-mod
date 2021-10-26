@@ -1,0 +1,31 @@
+health: 210
+size: 3
+liquidCapacity: 10
+requirements: [
+aluminium/200
+graphite/200
+metaglass/50
+hard_beton/400
+plastanium/40
+]  
+hasPower: true
+hasItems: true
+hasLiquids: true
+craftTime: 200
+consumes: {
+  power: 6
+  items: {
+    items: [
+      titanium/2
+    ]
+  }
+  liquid:{
+    liquid: uranium_oil
+    amount: 0.6
+  }
+}
+updateEffect: nuclearsmoke
+category: crafting
+idleSoundVolume: 1.5
+itemCapacity: 10
+outputItem: uranium_brick/2

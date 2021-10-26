@@ -1,0 +1,21 @@
+category: turret
+
+requirements: [
+	aluminium/200
+	bronze/155
+  graphite/70
+	hard_beton/140
+	metaglass/20
+	blue_thorium/30
+]
+
+coolantMultiplier: 30
+consumes: {
+  liquid: {
+    liquid: thorium_oil
+    amount: 0.07
+    optional: true
+    booster: true
+  }
+}
+outlineColor: 00000000

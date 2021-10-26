@@ -1,0 +1,24 @@
+category: turret
+
+liquidCapacity: 60
+
+requirements: [
+	bronze/750
+  graphite/450
+	hard_beton/750
+	metaglass/500
+	silicon/630
+	greatness_core/3
+	iritrium/55
+]
+
+shootSoundVolume: 2
+coolantMultiplier: 40
+consumes: {
+  liquid: {
+    liquid: iridium_oil
+    amount: 0.09
+    optional: true
+    booster: true
+  }
+}

@@ -1,0 +1,26 @@
+health: 120
+size: 2
+requirements: [
+copper/95
+lead/40
+graphite/35
+beton/60
+]  
+hasPower: false
+hasItems: true
+hasLiquids: false
+craftTime: 40
+consumes: {
+  items:{
+    items:[
+      aluminium_ore/2
+      sulfur/1
+    ]
+  }
+}
+updateEffect: purifystone
+category: crafting
+idleSoundVolume: 1
+itemCapacity: 10
+idleSound: release
+outputItem: aluminium/2

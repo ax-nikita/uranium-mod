@@ -1,0 +1,31 @@
+type: GenericCrafter
+health: 500
+size: 4
+requirements: [
+titanium/200
+aluminium/380
+graphite/230
+metaglass/100
+uranium_brick/100
+order_core/10
+iritrium/15
+]  
+hasPower: true
+hasItems: true
+hasLiquids: false
+craftTime: 3600
+consumes: {
+  power: 8
+  items:{
+    items:[
+      order_core/1
+      iritrium/20
+      iridium/1
+    ]
+  }
+}
+updateEffect: pulverizeSmall
+category: crafting
+idleSoundVolume: 0.7
+itemCapacity: 40
+outputItem: greatness_core/1

@@ -1,0 +1,29 @@
+health: 210
+size: 3
+hasItems: true
+hasPower: true
+hasLiquids: true
+craftTime:340
+liquidCapacity: 2
+consumes: {
+power: 9
+items: {
+items: [
+uranium-235/1
+blue_thorium/3
+]}}
+outputLiquid: uranium_oil/120
+requirements: [
+bronze/400
+hard_beton/350
+metaglass/180
+aluminium/340
+]
+category: crafting
+
+updateEffect: mine
+idleSoundVolume: 3
+itemCapacity: 20
+idleSound: windowHide
+frontColor: ff0000
+backColor: ff0000

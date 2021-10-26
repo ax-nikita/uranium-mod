@@ -1,0 +1,14 @@
+type: LiquidExtendingBridge
+health: 120
+range: 6
+hasPower: false
+requirements: [
+  metaglass/20
+  silicon/10
+  aluminium/9
+  blue_thorium/3
+]
+liquidCapacity: 23
+liquidPressure: 10
+leakResistance: 10
+category: liquid

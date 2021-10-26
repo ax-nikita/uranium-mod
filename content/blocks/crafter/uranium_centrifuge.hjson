@@ -1,0 +1,28 @@
+health: 200
+size: 3
+requirements: [
+bronze/150
+lead/240
+aluminium/135
+metaglass/75
+hard_beton/240
+]  
+hasPower: true
+hasItems: true
+hasLiquids: false
+craftTime: 165
+consumes: {
+  power: 7.5
+  items:{
+    items:[
+      uranium-238/8
+      sulfur/6
+    ]
+  }
+}
+updateEffect: nuclearsmoke
+category: crafting
+idleSoundVolume: 0.5
+itemCapacity: 20
+idleSound: centrifuge
+outputItem: uranium-235/2

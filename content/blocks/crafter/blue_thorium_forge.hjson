@@ -1,0 +1,26 @@
+health: 300
+size: 3
+liquidCapacity: 30
+requirements: [
+bronze/125
+graphite/75
+aluminium/90
+hard_beton/130
+]  
+hasPower: true
+hasItems: true
+hasLiquids: true
+craftTime: 135
+consumes: {
+  power: 3
+  liquid:{
+    liquid: thorium_oil
+    amount: 0.4
+  }
+}
+updateEffect: purify
+category: crafting
+idleSoundVolume: 0.4
+itemCapacity: 4
+idleSound: spray
+outputItem: blue_thorium/2

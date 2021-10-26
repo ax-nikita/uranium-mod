@@ -1,0 +1,29 @@
+type: GenericCrafter
+health: 300
+size: 3
+requirements: [
+titanium/300
+aluminium/380
+graphite/230
+metaglass/320
+uranium_brick/100
+]  
+hasPower: true
+hasItems: true
+hasLiquids: false
+craftTime: 1300
+consumes: {
+  power: 8
+  items:{
+    items:[
+      uranium_brick/21
+      bronze/590
+      aluminium/250
+    ]
+  }
+}
+updateEffect: pulverizeSmall
+category: crafting
+idleSoundVolume: 0.7
+itemCapacity: 1050
+outputItem: order_core/1

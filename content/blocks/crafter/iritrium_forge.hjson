@@ -1,0 +1,29 @@
+type: GenericCrafter
+health: 340
+size: 3
+requirements: [
+  titanium/260
+  hard_beton/125
+  lead/130
+  graphite/240
+  metaglass/630
+  order_core/6
+]  
+hasPower: true
+hasItems: true
+hasLiquids: false
+craftTime: 660
+consumes: {
+  power: 8.5
+  items:{
+    items:[
+      tritium/1
+      iridium/1
+    ]
+  }
+}
+updateEffect: pulverizeSmall
+category: crafting
+idleSoundVolume: 0.7
+itemCapacity: 20
+outputItem: iritrium/10

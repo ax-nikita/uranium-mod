@@ -1,0 +1,31 @@
+type: GenericCrafter
+health: 700
+size: 3
+liquidCapacity: 160
+requirements: [
+aluminium/320
+graphite/70
+copper/1200
+uranium_brick/60
+hard_beton/400
+order_core/2
+phase-fabric/15 
+surge-alloy/50
+]  
+hasPower: true
+hasItems: true
+hasLiquids: true
+craftTime: 1800
+consumes: {
+  power: 6
+  liquid:{
+    liquid: iridium_oil
+    amount: 0.133333333
+  }
+}
+updateEffect: purify
+category: crafting
+idleSoundVolume: 0.4
+itemCapacity: 4
+idleSound: spray
+outputItem: iridium/1

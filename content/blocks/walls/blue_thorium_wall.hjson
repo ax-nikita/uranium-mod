@@ -1,0 +1,8 @@
+health: 1600
+size: 1
+requirements: [
+  blue_thorium/9
+  aluminium/16
+  thorium/3
+]
+category: defense

@@ -1,0 +1,21 @@
+category: turret
+
+requirements: [
+  hard_beton/170
+	uranium_brick/24
+	bronze/240
+  copper/140
+	order_core/2
+	blue_thorium/75
+]
+
+coolantMultiplier: 55
+consumes: {
+  liquid: {
+    liquid: uranium_oil
+    amount: 0.07
+    optional: true
+    booster: false
+  }
+}
+outlineColor: 00000000

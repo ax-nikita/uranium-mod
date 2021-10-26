@@ -1,0 +1,15 @@
+
+type: PowerNode
+size: 1
+
+health:170
+hasPower:true
+category:power
+requirements:[
+  aluminium/16
+  blue_thorium/2
+  silicon/5
+  bronze/6
+]
+ maxNodes: 15
+ laserRange: 10

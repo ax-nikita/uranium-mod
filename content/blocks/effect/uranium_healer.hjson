@@ -1,0 +1,33 @@
+
+type: MendProjector
+health: 1300
+size: 3
+
+hasPower: true
+baseColor: 1cdd1c88
+phaseColor: 5cdd5c99
+healPercent: 1
+phaseBoost: 1
+range: 104
+reload: 15
+phaseRangeBoost: 56
+itemCapacity: 5
+useTime: 120
+consumes: {
+  power: 8
+  items: {
+    items: [
+      uranium-fuel-cell/1
+    ]
+    booster: true
+	  optional: true
+  }
+}
+requirements: [
+  titanium/75
+  order_core/4
+  uranium_brick/67
+  aluminium/24
+  hard_beton/125
+]
+category: effect

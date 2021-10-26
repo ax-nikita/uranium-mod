@@ -1,0 +1,15 @@
+type: Conveyor
+health: 110
+solid: true
+floating: true
+
+requirements: [
+  aluminium/2
+  blue_thorium/1
+  bronze/4
+  titanium/2
+]
+category: distribution
+speed: 0.23
+size: 1
+displayedSpeed: 25

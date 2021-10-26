@@ -1,0 +1,6 @@
+type: Item
+name: Uranium-238
+description: Can be used to obtain uranium-235.
+hardness: 4
+color: 036100
+radioactivity: 1.1

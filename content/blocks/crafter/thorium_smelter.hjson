@@ -1,0 +1,28 @@
+health: 230
+size: 2
+hasItems: true
+hasPower: true
+hasLiquids: true
+craftTime:160
+liquidCapacity: 2
+consumes: {
+power: 5
+items: {
+items: [
+thorium/10
+]}}
+requirements: [
+copper/230
+lead/300
+hard_beton/150
+metaglass/120
+aluminium/175
+]
+
+outputLiquid: thorium_oil/120
+category: crafting
+
+updateEffect: purify
+idleSoundVolume: 0.2
+itemCapacity: 20
+idleSound: spray

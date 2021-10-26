@@ -1,0 +1,12 @@
+type: StorageBlock
+itemCapacity: 5000
+hasItems: true
+health: 4000
+size: 5
+requirements: [
+  uranium_brick/260
+  bronze/900
+  blue_thorium/230
+  titanium/600
+]
+category: effect

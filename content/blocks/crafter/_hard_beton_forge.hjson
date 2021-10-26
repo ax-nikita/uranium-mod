@@ -1,0 +1,27 @@
+health: 80
+size: 2
+requirements: [
+lead/40
+graphite/30
+titanium/20
+beton/20
+]  
+hasPower: true
+hasItems: true
+hasLiquids: false
+craftTime: 60
+consumes: {
+  power: 0.6
+  items:{
+    items:[
+      armatura/1
+      beton/4
+    ]
+  }
+}
+updateEffect: smelt
+category: crafting
+idleSoundVolume: 0.7
+idleSound: conveyor
+itemCapacity: 10
+outputItem: hard_beton/5

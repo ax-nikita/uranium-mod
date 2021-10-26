@@ -1,0 +1,13 @@
+type: junction
+health: 80
+speed: 0.6
+capacity: 10
+size: 1
+requirements:[
+  aluminium/5
+  blue_thorium/5
+  bronze/12
+  titanium/2
+  hard_beton/6
+]
+category: distribution

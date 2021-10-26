@@ -1,0 +1,8 @@
+type: OreBlock
+itemDrop: sulfur
+playerUnmineable: true
+oreDefault: true
+variants: 3
+oreScale: 23
+oreThreshold: 0.84
+color: ebebeb

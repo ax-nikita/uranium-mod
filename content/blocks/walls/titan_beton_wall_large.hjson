@@ -1,0 +1,5 @@
+size: 2
+requirements: [
+  hard_beton/24
+]
+category: defense

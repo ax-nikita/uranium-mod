@@ -1,0 +1,5 @@
+type: Item
+name: Uranium fuel cell
+description: Lots of energy in a graphite container.
+color: 6eff2a
+radioactivity: 4

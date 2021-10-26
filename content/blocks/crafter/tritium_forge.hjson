@@ -1,0 +1,30 @@
+type: GenericCrafter
+health: 120
+size: 4
+requirements: [
+titanium/400
+aluminium/80
+lead/140
+graphite/300
+metaglass/95
+order_core/4
+]  
+hasPower: true
+hasItems: true
+hasLiquids: false
+craftTime: 1800
+consumes: {
+  power: 8
+  items:{
+    items:[
+      uranium-235/20
+      surge-alloy/15
+      phase-fabric/10
+    ]
+  }
+}
+updateEffect: pulverizeSmall
+category: crafting
+idleSoundVolume: 0.7
+itemCapacity: 20
+outputItem: tritium/1

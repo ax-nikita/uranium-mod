@@ -1,0 +1,9 @@
+name: snow
+type: Floor
+speedMultiplier: 0.8
+isLiquid: false
+dragMultiplier: 1
+variants: 3
+attributes: {
+	array: [ 0, 0, 1.4, 0 ] 
+}

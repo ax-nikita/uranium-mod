@@ -1,0 +1,11 @@
+itemCapacity: 10
+hasItems: true
+health: 240
+size: 1
+requirements: [
+  aluminium/10
+  blue_thorium/5
+  uranium_brick/5
+  titanium/20
+]
+category: distribution

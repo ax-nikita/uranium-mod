@@ -1,0 +1,14 @@
+category: turret
+liquidCapacity: 20
+requirements: [
+	copper/25
+	lead/20
+]
+consumes: {
+  liquid: {
+    liquid: water
+    amount: 0.1
+    optional: true
+    booster: true
+  }
+}

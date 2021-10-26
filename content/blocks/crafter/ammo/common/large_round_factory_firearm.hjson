@@ -1,0 +1,54 @@
+health: 240
+size: 3
+requirements: [
+bronze/320
+hard_beton/440
+aluminium/290
+titanium/320
+graphite/115
+]  
+hasPower: true
+hasItems: true
+hasLiquids: false
+craftTime: 35
+consumes: {
+  power: 1
+  items:{
+    items:[
+      bronze/1
+      lead/1
+      titanium/1
+      aluminium/1
+      sulfur/1
+      pyratite/1
+      thorium/1
+      altit/1
+      blast-compound/1
+      blue_thorium/1
+      phase-fabric/1
+      uranium-235/1
+      iridium/1
+      tritium/1
+      iritrium/1
+    ]
+  }
+}
+updateEffect: plasticburn
+category: crafting
+idleSoundVolume: 0.7
+itemCapacity: 60
+outputItems: [
+  firearm_large_round/1
+  titanium_large_round/1
+  aluminium_large_round/1
+  fire_large_round/1
+  thorium_large_round/1
+  altit_large_round/1
+  exp_large_round/1
+  blue-thorium_large_round/1
+  ultrafast_large_round/1
+  uranium_large_round/1
+  iridium_large_round/1
+  tritium_large_round/1
+  iritrium_large_round/1
+]

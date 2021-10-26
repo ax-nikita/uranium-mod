@@ -1,0 +1,5 @@
+type: Item
+name: Concrete
+description: Sturdy and cheap material. Basic industry, but don't overdo it.
+color: 7f8c92
+cost: 0.85

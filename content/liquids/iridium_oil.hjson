@@ -1,0 +1,6 @@
+name: Iridium
+description: Can be used as fuel to accelerate high tier turrets.
+temperature: 1.6
+viscosity: 0.95
+color: dddddd
+lightColor: FFFFFF88

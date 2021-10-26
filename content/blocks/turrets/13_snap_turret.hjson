@@ -1,0 +1,14 @@
+category: turret
+requirements: [
+	bronze/75
+  graphite/40
+	hard_beton/70
+]
+consumes: {
+  liquid: {
+    liquid: water
+    amount: 0.2
+    optional: true
+    booster: true
+  }
+}

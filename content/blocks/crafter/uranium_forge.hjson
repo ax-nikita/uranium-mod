@@ -1,0 +1,28 @@
+health: 120
+size: 3
+requirements: [
+titanium/120
+aluminium/80
+lead/140
+graphite/136
+metaglass/95
+hard_beton/180
+]  
+hasPower: true
+hasItems: true
+hasLiquids: false
+craftTime: 190
+consumes: {
+  power: 4.5
+  items:{
+    items:[
+      uranium-235/3
+      graphite/6
+    ]
+  }
+}
+updateEffect: pulverizeSmall
+category: crafting
+idleSoundVolume: 0.7
+itemCapacity: 10
+outputItem: uranium-fuel-cell/2

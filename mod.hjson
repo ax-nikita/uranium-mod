@@ -1,0 +1,6 @@
+name: "Uranium-Mod"
+displayName: "[green]Uranium[] Global Survival Mod."
+author: "[red]AX"
+description: "Adds [green]nuclear[] power, cool turrets and many factories."
+version: "3.2" 
+minGameVersion: 105

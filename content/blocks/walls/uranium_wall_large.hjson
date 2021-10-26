@@ -1,0 +1,9 @@
+size: 2
+requirements: [
+  uranium_brick/32
+  titanium/40
+  graphite/40
+  silicon/40
+]
+
+category: defense

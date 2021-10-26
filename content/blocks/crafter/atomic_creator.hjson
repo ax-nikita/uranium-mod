@@ -1,0 +1,27 @@
+health: 300
+size: 2
+liquidCapacity: 10
+requirements: [
+aluminium/240
+graphite/300
+hard_beton/450
+plastanium/100
+uranium_brick/45
+]  
+hasPower: true
+hasItems: true
+hasLiquids: true
+craftTime: 305
+consumes: {
+  power: 2
+  liquid:{
+    liquid: uranium_oil
+    amount: 0.30
+  }
+}
+updateEffect: pulverizeSmall
+category: crafting
+idleSoundVolume: 0.7
+itemCapacity: 10
+idleSound: splash
+outputItem: uranium-238/11

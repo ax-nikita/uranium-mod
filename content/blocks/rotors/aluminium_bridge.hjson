@@ -1,0 +1,14 @@
+type: BufferedItemBridge
+health: 100
+range: 6
+speed: 0.23
+bufferCapacity: 5
+hasPower: false
+requirements:[
+  aluminium/7
+  blue_thorium/5
+  bronze/24
+  titanium/2
+]
+category: distribution
+size: 1

@@ -1,0 +1,18 @@
+category: turret
+
+requirements: [
+	titanium/45
+  graphite/15
+	aluminium/45
+	uranium_brick/12
+]
+
+coolantMultiplier: 70
+consumes: {
+  liquid: {
+    liquid: uranium_oil
+    amount: 0.03
+    optional: true
+    booster: true
+  }
+}

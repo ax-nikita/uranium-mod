@@ -1,0 +1,25 @@
+health: 80
+size: 2
+requirements: [
+beton/60
+lead/30
+silicon/15
+]  
+hasPower: true
+hasItems: true
+hasLiquids: false
+craftTime: 60
+consumes: {
+  power: 0.8
+  items:{
+    items:[
+      titanium/14
+    ]
+  }
+}
+updateEffect: pulverizeSmall
+category: crafting
+idleSoundVolume: 0.8
+idleSound: door
+itemCapacity: 24
+outputItem: armatura/3

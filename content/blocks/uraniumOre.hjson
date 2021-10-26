@@ -1,0 +1,14 @@
+itemDrop: uranium-238
+playerUnmineable: true
+oreDefault: true
+variants: 3
+oreScale: 50
+oreThreshold: 0.89
+emitLight: true
+lightRadius: 65
+lightColor: e86827
+
+mapColor: e86827
+hasColor: true
+minimapColor: e86827
+update: true

@@ -1,0 +1,32 @@
+type: ForceProjector
+health: 1400
+size: 2
+liquidCapacity: 30
+baseExplosiveness: 2
+hasPower: true
+canOverdrive: true
+phaseUseTime: 360
+phaseRadiusBoost: 16
+radius: 56
+shieldHealth: 2900
+cooldownNormal: 10
+cooldownLiquid: 12
+cooldownBrokenBase: 1
+basePowerDraw: 3
+consumes: {
+  power: 4
+  items: {
+    items: [
+      tritium/1
+    ]
+    booster: true
+	  optional: true
+  }
+}
+requirements: [
+  titanium/140
+  order_core/1
+  uranium_brick/60
+  hard_beton/110
+]
+category: effect

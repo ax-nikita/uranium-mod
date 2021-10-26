@@ -1,0 +1,27 @@
+type: GenericCrafter
+health: 100
+size: 2
+requirements: [
+hard_beton/70
+copper/30
+lead/50
+graphite/17
+titanium/25
+]  
+hasPower: true
+hasItems: true
+hasLiquids: false
+craftTime: 85
+consumes: {
+  power: 1.5
+  items:{
+    items:[
+      lead/2
+      copper/6
+    ]
+  }
+}
+updateEffect: purifystone
+category: crafting
+itemCapacity: 10
+outputItem: bronze/3

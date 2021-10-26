@@ -1,0 +1,22 @@
+category: turret
+
+requirements: [
+  hard_beton/190
+	bronze/210
+  aluminium/190
+	metaglass/300
+	greatness_core/1
+	iritrium/10
+  uranium_brick/4
+]
+
+coolantMultiplier: 65
+consumes: {
+  liquid: {
+    liquid: iridium_oil
+    amount: 0.06
+    optional: true
+    booster: true
+  }
+}
+outlineColor: 00000000

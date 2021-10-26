@@ -1,0 +1,22 @@
+category: turret
+
+requirements: [
+	bronze/200
+  aluminium/340
+  graphite/200
+	hard_beton/600
+	metaglass/400
+	silicon/100
+	order_core/5
+]
+
+coolantMultiplier: 40
+consumes: {
+  liquid: {
+    liquid: uranium_oil
+    amount: 0.12
+    optional: true
+    booster: true
+  }
+}
+outlineColor: 00000000

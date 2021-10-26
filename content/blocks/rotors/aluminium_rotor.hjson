@@ -1,0 +1,12 @@
+type: Router
+itemCapacity: 2
+hasItems: true
+health: 90
+size: 1
+requirements: [
+  aluminium/5
+  blue_thorium/2
+  bronze/12
+  titanium/2
+]
+category: distribution

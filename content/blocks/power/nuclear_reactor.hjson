@@ -1,0 +1,36 @@
+health: 600
+size: 4
+hasPower: true
+hasLiquids: true
+hasItems: true
+itemCapacity: 120
+liquidCapacity: 20
+itemDuration: 230
+powerProduction: 265
+heating: 0.010
+smokeThreshold: 0.48
+explosionRadius: 120   
+explosionDamage: 4000  
+coolantPower: 0.015
+flashThreshold: 0.34  
+consumes: {
+ liquid: cryofluid/0.001
+  items: {
+   items: [
+    uranium-fuel-cell/3
+    ]
+  }
+}
+requirements: [
+  lead/950
+  metaglass/700
+  silicon/450
+  graphite/350
+  plastanium/250
+  hard_beton/2250
+  aluminium/600
+]
+category: power
+idleEffect: mineHide
+idleSoundVolume: 4
+idleSound: windowHide

@@ -1,0 +1,9 @@
+name: Sand
+type: Floor
+speedMultiplier: 0.9
+isLiquid: false
+dragMultiplier: 1
+variants: 3
+attributes: {
+	array: [0, 0, 0, 0] 
+} 

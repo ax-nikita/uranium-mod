@@ -1,0 +1,28 @@
+type: Drill
+size: 2
+health: 300
+drillTime: 6
+tier: 5
+drawRim: false
+hardnessDrillMultiplier: 17
+consumes: {
+	power: 2
+	liquid: {
+		liquid: thorium_oil
+		amount: 0.08
+		booster: false
+		optional: false
+	}
+}
+liquidBoostIntensity: 1
+hasLiquids: true
+liquidCapacity: 60
+rotateSpeed: -15
+requirements: [
+	bronze/230
+	titanium/330
+	aluminium/120
+	blue_thorium/60
+]
+research: blast-drill
+category: production

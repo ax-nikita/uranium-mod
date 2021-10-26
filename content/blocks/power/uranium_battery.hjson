@@ -1,0 +1,16 @@
+name: "Huge Battery"
+description: "Stores power in times of surplus energy. Outputs power in times of deficit. Higher capacity than a large battery."
+size: 3
+health: 690
+consumes: {
+  powerBuffered: 100000
+}
+consumesPower: true
+outputsPower: true
+requirements: [
+  uranium_brick/85
+  titanium/265
+  graphite/450
+  silicon/325
+]
+category: power

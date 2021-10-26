@@ -1,0 +1,36 @@
+health: 60
+size: 1
+requirements: [
+copper/70
+lead/50
+beton/25
+titanium/50
+]
+consumes: {
+  power: 1
+  items:{
+    outputItems: [
+      firearm_round/1
+      titanium_round/1
+      aluminium_round/1
+      fire_round/1
+      thorium_round/1
+      altit_round/1
+      exp_round/1
+      blue-thorium_round/1
+      ultrafast_round/1
+      uranium_round/1
+      iridium_round/1
+      tritium_round/1
+      iritrium_round/1
+    ]
+  }
+}
+
+hasPower: true
+hasItems: true
+hasLiquids: false
+updateEffect: none
+category: crafting
+idleSoundVolume: 0
+itemCapacity: 60

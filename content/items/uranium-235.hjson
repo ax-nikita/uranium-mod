@@ -1,0 +1,5 @@
+type: Item
+name: Uranium-235
+description: Can be used to obtain energy, nuclear weapons and more.
+color: 0cc406
+radioactivity: 1.25

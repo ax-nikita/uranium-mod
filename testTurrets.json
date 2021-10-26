@@ -1,0 +1,67 @@
+{
+  "клен": [
+    {
+      "ammo": "firearm_30x173",
+      "kills": 407,
+      "wave": 16,
+      "projector": "true",
+      "liquid": "uranium"
+    },
+    {
+      "ammo": "titnium_30x173",
+      "kills": 535,
+      "wave": 18,
+      "projector": "true",
+      "liquid": "uranium"
+    },
+    {
+      "ammo": "aluminium_30x173",
+      "kills": 654,
+      "wave": 20,
+      "projector": "true",
+      "liquid": "uranium"
+    },
+    {
+      "ammo": "fire_30x173",
+      "kills": 420,
+      "wave": 16,
+      "projector": "true",
+      "liquid": "uranium"
+    },
+    {
+      "ammo": "thorium_30x173",
+      "kills": 756,
+      "wave": 21,
+      "projector": "true",
+      "liquid": "uranium"
+    },
+    {
+      "ammo": "exp_30x173",
+      "kills": 814,
+      "wave": 22,
+      "projector": "true",
+      "liquid": "uranium"
+    },
+    {
+      "ammo": "blue_thorium_30x173",
+      "kills": 978,
+      "wave": 24,
+      "projector": "true",
+      "liquid": "uranium"
+    },
+    {
+      "ammo": "ultrafsta_30x173",
+      "kills": 972,
+      "wave": 24,
+      "projector": "true",
+      "liquid": "uranium"
+    },
+    {
+      "ammo": "uranium_30x173",
+      "kills": 1200,
+      "wave": 26,
+      "projector": "true",
+      "liquid": "uranium"
+    }
+  ]
+}
