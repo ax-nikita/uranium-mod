@@ -3,9 +3,48 @@ const
 
 let
   sounds = {
-    '12-shot': Vars.mods.scripts.loadSound('12-shot'),
-    'big_shot': Vars.mods.scripts.loadSound('big_shot')
-  }
+    '12-shot': Vars.tree.loadSound('12-shot'),
+    'big_shot': Vars.tree.loadSound('big_shot'),
+    'energy-charge-druzhba': Vars.tree.loadSound('energy-charge-druzhba'),
+    'energy-charge-dalh': Vars.tree.loadSound('energy-charge-dalh'),
+    'energy-charge-spartan': Vars.tree.loadSound('energy-charge-spartan'),
+    'energy-plasma-druzhba': Vars.tree.loadSound('energy-plasma-druzhba'),
+    'energy-laser-dalh': Vars.tree.loadSound('energy-laser-dalh'),
+    'energy-laser-spartan': Vars.tree.loadSound('energy-laser-spartan'),
+    'energy-laser-dalh-loop': Vars.tree.loadSound('energy-laser-dalh-loop'),
+    'energy-laser-spartan-loop': Vars.tree.loadSound('energy-laser-spartan-loop')
+  };
+
+// Charge layers are intentionally limited too; several synchronized energy
+// turrets should feel massive, not become one continuous high-density drone.
+[
+  sounds['energy-charge-druzhba'],
+  sounds['energy-charge-dalh'],
+  sounds['energy-charge-spartan']
+].forEach(s => s.setMaxConcurrent(4));
+
+const uraniumTurretManifest = [
+  '11_auto_turret',
+  '12_auto_turret_zver',
+  '13_snap_turret',
+  '21_auto_turret_mustang',
+  '22_air_turret_rels',
+  '23_auto_turret_udav',
+  '24_hard_auto_turret',
+  '25_auto_turret_ceklon',
+  '26_snap_turret_cobra',
+  '31_multi_turret_scarabey',
+  '32_auto_turret_scat',
+  '33_snap_turret_anaconda',
+  '34_hard_auto_turret_voshod',
+  '35_laser_turret_zvezda',
+  '36_laser_turret_dalh',
+  '37_ART_Clen',
+  '41_laser_turret_spartan',
+  '42_tomahawk',
+  '43_inkvizitor',
+  '45_ART_imperator'
+];
 
 //-------------1 тир турелей
 uranium//------Турель жук
@@ -40,7 +79,7 @@ uranium//------Турель зверь
     _shield: 0
   })
   .setTurretTarget('all')
-  .setTurretShot(17, 3)
+  .setTurretShot(35.3, 3)
   .setTurretOther(152, 3, 3)
   .customSetting({
     alternate: true,
@@ -63,7 +102,8 @@ uranium//------Санайперская турель гадюка
   .setTurretShot(194, 1)
   .setTurretOther(290, 1)
   .customSetting({
-    shootSound: sounds['12-shot']
+    shootSound: sounds['12-shot'],
+    _shootSoundVolume: 0.85
   })
   .setBuildTurret({});
 
@@ -93,7 +133,7 @@ uranium//------Турель мустанг
 uranium//------Противовоздушная рельса
   .createItemTurret("22_air_turret_rels", 'relsa', {
     tier: 2,
-    expShoot: 2,
+    expShoot: 13,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 1,
     health: 700,
@@ -108,10 +148,10 @@ uranium//------Противовоздушная рельса
     }
   })
   .setTurretTarget('air')
-  .setTurretShot(110, 9, 0.2)
+  .setTurretShot(110)
   .setTurretOther(290, 4, 0)
   .customSetting({
-    shootSound: Sounds.boom
+    shootSound: Sounds.shootArtillery
   })
   .setBuildTurret({});
 
@@ -159,7 +199,8 @@ uranium//------Крупнокалиберная турель крот
   .setTurretOther(130, 1.2, 22)
   .customSetting({
     xRand: 3,
-    shootSound: sounds['12-shot']
+    shootSound: sounds['12-shot'],
+    _shootSoundVolume: 0.85
   })
   .setBuildTurret({});
 
@@ -205,7 +246,8 @@ uranium//------Снайперская турель кобра
   .setTurretShot(100)
   .setTurretOther(310, 1.5, 0)
   .customSetting({
-    shootSound: sounds['12-shot']
+    shootSound: sounds['12-shot'],
+    _shootSoundVolume: 0.85
   })
   .setBuildTurret({});
 
@@ -265,7 +307,8 @@ uranium//------Турель анаконда
   .setTurretShot(96)
   .setTurretOther(325, 2, 0)
   .customSetting({
-    shootSound: sounds['12-shot']
+    shootSound: sounds['12-shot'],
+    _shootSoundVolume: 0.85
   })
   .setBuildTurret({});
 
@@ -292,7 +335,8 @@ uranium//------Турель Восход
     //shootLength: 10, Отвести выстрел назад
     spread: 4.7,//Отвести в стороны
     xRand: 0.1,
-    shootSound: sounds['12-shot']
+    shootSound: sounds['12-shot'],
+    _shootSoundVolume: 0.85
   })
   .setBuildTurret({});
 
@@ -310,7 +354,8 @@ uranium//------Турель звезда
     updateMap: {
       5: [4, 15],
       10: [5, 13]
-    }
+    },
+    heatColor: Color.valueOf('04e404')
   })
   .setTurretTarget('all')
   .setTurretShot(40, 1)
@@ -320,7 +365,11 @@ uranium//------Турель звезда
     chargeMaxDelay: 30,
     chargeEffects: 1,
     powerUse: 6,
-    shootSound: Sounds.laser
+    chargeSound: sounds['energy-charge-druzhba'],
+    shootSound: sounds['energy-plasma-druzhba'],
+    _shootSoundVolume: 0.94,
+    _energyChargeFamily: 'plasma',
+    _energyChargeStrength: 1.0
   })
   .setBuildPowerTurret({});
 
@@ -345,9 +394,15 @@ uranium//------Турель даль
   .customSetting({
     chargeTime: 60,
     chargeMaxDelay: 60,
-    shootSound: Sounds.laser,
+    chargeSound: sounds['energy-charge-dalh'],
+    shootSound: sounds['energy-laser-dalh'],
+    shootSoundVolume: 0.92,
+    loopSound: sounds['energy-laser-dalh-loop'],
+    loopSoundVolume: 0.78,
     powerUse: 4,
-    shootCone: 50
+    shootCone: 50,
+    _energyChargeFamily: 'laser',
+    _energyChargeStrength: 0.95
   })
   .setBuildLaserTurret({});
 
@@ -397,10 +452,7 @@ uranium//------Турель спартанец
     },
     icons() {
       return [
-        Core.atlas.find("uranium-mod-tier-" + this.tier + "-" + this.size + "-base"),
-        Core.atlas.find(this.name + "-right_flank"),
-        Core.atlas.find(this.name + "-left_flank"),
-        Core.atlas.find(this.name)
+        Core.atlas.find(this.name + "-icon")
       ]
     },
     health: 1200,
@@ -414,8 +466,14 @@ uranium//------Турель спартанец
     chargeTime: 30,
     chargeMaxDelay: 60,
     chargeEffects: 1,
-    shootSound: Sounds.laser,
-    powerUse: 10
+    chargeSound: sounds['energy-charge-spartan'],
+    shootSound: sounds['energy-laser-spartan'],
+    shootSoundVolume: 0.98,
+    loopSound: sounds['energy-laser-spartan-loop'],
+    loopSoundVolume: 0.86,
+    powerUse: 10,
+    _energyChargeFamily: 'laser',
+    _energyChargeStrength: 1.30
   })
   .setBuildLaserTurret({
     draw() {
@@ -428,45 +486,49 @@ uranium//------Турель спартанец
         turretRegion = regions.turret,
         baseRegion = regions.base,
         rot1 = this.rotation - 90,
-        shootOffset = this.recoil * 1.4 - 0.05,
-        liquid = this.liquids.total() / this.parent.liquidCapacity,
+        shootOffset = this.curRecoil * this.block.recoil * 1.4 - 0.05,
+        liquid = this.liquids.currentAmount() / this.parent.liquidCapacity,
         turretColor = this.getTurretColor();
 
       Draw.alpha(1);
       if (turretColor)
-        Draw.color(Color.valueOf(turretColor));
+        Draw.color(uranium.getRuntimeColor(turretColor));
       Draw.rect(baseRegion[0], this.x, this.y);
       if (turretColor)
         Draw.reset();
       Draw.z(Layer.turret);
+      const rotRad = rot1 * Math.PI / 180,
+        rotSin = Math.sin(rotRad),
+        rotCos = Math.cos(rotRad);
       let
-        x = this.x + Math.sin(rot1 / 180 * Math.PI) * shootOffset,
-        y = this.y - Math.cos(rot1 / 180 * Math.PI) * shootOffset,
+        x = this.x + rotSin * shootOffset,
+        y = this.y - rotCos * shootOffset,
         shootOffsetWind = -liquid * 3.8 - shootOffset + 4.5,
         x_wind_1,
         y_wind_1,
         x_wind_2,
         y_wind_2;
       if (liquid > 0.01) {
-        x_wind_1 = this.x + Math.sin(rot1 / 180 * Math.PI) * shootOffset + Math.cos(rot1 / 180 * -Math.PI) * shootOffsetWind;
-        y_wind_1 = this.y - Math.cos(rot1 / 180 * Math.PI) * shootOffset - Math.sin(rot1 / 180 * -Math.PI) * shootOffsetWind;
-        x_wind_2 = this.x + Math.sin(rot1 / 180 * Math.PI) * shootOffset + Math.cos(rot1 / 180 * -Math.PI) * -shootOffsetWind;
-        y_wind_2 = this.y - Math.cos(rot1 / 180 * Math.PI) * shootOffset - Math.sin(rot1 / 180 * -Math.PI) * -shootOffsetWind;
+        x_wind_1 = x + rotCos * shootOffsetWind;
+        y_wind_1 = y + rotSin * shootOffsetWind;
+        x_wind_2 = x - rotCos * shootOffsetWind;
+        y_wind_2 = y - rotSin * shootOffsetWind;
         if (turretColor)
-          Draw.color(Color.valueOf(turretColor));
+          Draw.color(uranium.getRuntimeColor(turretColor));
         Draw.rect(turretRegion[1], x_wind_2, y_wind_2, this.rotation - 90);
         Draw.rect(turretRegion[2], x_wind_1, y_wind_1, this.rotation - 90);
         if (turretColor)
           Draw.reset();
       }
       if (turretColor)
-        Draw.color(Color.valueOf(turretColor));
+        Draw.color(uranium.getRuntimeColor(turretColor));
       Draw.rect(turretRegion[0], x, y, this.rotation - 90);
       if (turretColor)
         Draw.reset();
       Draw.alpha(liquid);
       Draw.rect(turretRegion[3], x, y, this.rotation - 90);
 
+      uranium.drawTurretFuelGlow(this, x, y);
       uranium.turretDrawInTheEnd(this);
     }
   });
@@ -474,7 +536,7 @@ uranium//------Турель спартанец
 uranium//------Турель Томагавк
   .createItemTurret("42_tomahawk", 'relsa', {
     tier: 4,
-    expShoot: 1,
+    expShoot: 100,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 2,
     baseLoadRegion: {
@@ -490,10 +552,7 @@ uranium//------Турель Томагавк
     },
     icons() {
       return [
-        Core.atlas.find("uranium-mod-tier-" + this.tier + "-" + this.size + "-base"),
-        Core.atlas.find(this.name + "-right_flank"),
-        Core.atlas.find(this.name + "-left_flank"),
-        Core.atlas.find(this.name)
+        Core.atlas.find(this.name + "-icon")
       ]
     },
     health: 1500,
@@ -502,10 +561,10 @@ uranium//------Турель Томагавк
     shootShake: 1
   })
   .setTurretTarget('air')
-  .setTurretShot(70, 9, 0.1)
-  .setTurretOther(330, 4.5, 2)
+  .setTurretShot(50)
+  .setTurretOther(368, 5, 0)
   .customSetting({
-    shootSound: Sounds.boom
+    shootSound: Sounds.shootArtillery
   })
   .setBuildTurret({
     draw() {
@@ -518,26 +577,29 @@ uranium//------Турель Томагавк
         turretRegion = regions.turret,
         baseRegion = regions.base,
         rot1 = this.rotation - 90,
-        shootOffset = this.recoil * 1.5,
-        liquid = this.liquids.total() / this.parent.liquidCapacity,
+        shootOffset = this.curRecoil * this.block.recoil * 1.5,
+        liquid = this.liquids.currentAmount() / this.parent.liquidCapacity,
         turretColor = this.getTurretColor();
       if (turretColor)
-        Draw.color(Color.valueOf(turretColor));
+        Draw.color(uranium.getRuntimeColor(turretColor));
       Draw.alpha(1);
       Draw.rect(baseRegion[0], this.x, this.y);
       if (turretColor)
         Draw.reset();
       Draw.z(Layer.turret);
+      const rotRad = rot1 * Math.PI / 180,
+        rotSin = Math.sin(rotRad),
+        rotCos = Math.cos(rotRad);
       let
-        x = this.x + Math.sin(rot1 / 180 * Math.PI) * shootOffset,
-        y = this.y - Math.cos(rot1 / 180 * Math.PI) * shootOffset,
+        x = this.x + rotSin * shootOffset,
+        y = this.y - rotCos * shootOffset,
         shootOffsetWind = -liquid * 5 - shootOffset + 4,
-        x_wind_1 = this.x + Math.sin(rot1 / 180 * Math.PI) * shootOffset + Math.cos(rot1 / 180 * -Math.PI) * shootOffsetWind,
-        y_wind_1 = this.y - Math.cos(rot1 / 180 * Math.PI) * shootOffset - Math.sin(rot1 / 180 * -Math.PI) * shootOffsetWind,
-        x_wind_2 = this.x + Math.sin(rot1 / 180 * Math.PI) * shootOffset + Math.cos(rot1 / 180 * -Math.PI) * -shootOffsetWind,
-        y_wind_2 = this.y - Math.cos(rot1 / 180 * Math.PI) * shootOffset - Math.sin(rot1 / 180 * -Math.PI) * -shootOffsetWind;
+        x_wind_1 = x + rotCos * shootOffsetWind,
+        y_wind_1 = y + rotSin * shootOffsetWind,
+        x_wind_2 = x - rotCos * shootOffsetWind,
+        y_wind_2 = y - rotSin * shootOffsetWind;
       if (turretColor)
-        Draw.color(Color.valueOf(turretColor));
+        Draw.color(uranium.getRuntimeColor(turretColor));
       Draw.rect(turretRegion[1], x_wind_2, y_wind_2, this.rotation - 90);
       Draw.rect(turretRegion[2], x_wind_1, y_wind_1, this.rotation - 90);
       Draw.rect(turretRegion[0], x, y, this.rotation - 90);
@@ -546,6 +608,7 @@ uranium//------Турель Томагавк
       Draw.alpha(liquid);
       Draw.rect(turretRegion[3], x, y, this.rotation - 90);
 
+      uranium.drawTurretFuelGlow(this, x, y);
       uranium.turretDrawInTheEnd(this);
     }
   });
@@ -564,7 +627,12 @@ uranium//------Турель инквизитор
     maxAmmo: 30,
     shootShake: 1,
     _extraShield: 250,
-    _shield: 2
+    _shield: 2,
+    icons() {
+      return [
+        Core.atlas.find(this.name + "-icon")
+      ]
+    }
   })
   .setTurretTarget('all')
   .setTurretShot(12, 3)
@@ -596,8 +664,7 @@ uranium//------Турель Император
     },
     icons() {
       return [
-        Core.atlas.find("uranium-mod-tier-" + this.tier + "-" + this.size + "-base"),
-        Core.atlas.find(this.name)
+        Core.atlas.find(this.name + "-icon")
       ]
     },
     health: 2150,
@@ -622,28 +689,31 @@ uranium//------Турель Император
         turretRegion = regions.turret,
         baseRegion = regions.base,
         rot1 = this.rotation - 90,
-        shootOffset = this.recoil * 4,
-        liquid = this.liquids.total() / this.parent.liquidCapacity,
+        shootOffset = this.curRecoil * this.block.recoil * 4,
+        liquid = this.liquids.currentAmount() / this.parent.liquidCapacity,
         turretColor = this.getTurretColor();
       if (turretColor)
-        Draw.color(Color.valueOf(turretColor));
+        Draw.color(uranium.getRuntimeColor(turretColor));
       Draw.alpha(1);
       Draw.rect(baseRegion[0], this.x, this.y);
       if (turretColor)
         Draw.reset();
       Draw.z(Layer.turret);
+      const rotRad = rot1 * Math.PI / 180,
+        rotSin = Math.sin(rotRad),
+        rotCos = Math.cos(rotRad);
       let
         x = this.x,
         y = this.y,
-        x_recoil = x + Math.sin(rot1 / 180 * Math.PI) * shootOffset,
-        y_recoil = y - Math.cos(rot1 / 180 * Math.PI) * shootOffset,
+        x_recoil = x + rotSin * shootOffset,
+        y_recoil = y - rotCos * shootOffset,
         shootOffsetWind = -liquid * 5 + 6,
-        x_wind_1 = this.x + Math.cos(rot1 / 180 * -Math.PI) * shootOffsetWind,
-        y_wind_1 = this.y - Math.sin(rot1 / 180 * -Math.PI) * shootOffsetWind,
-        x_wind_2 = this.x + Math.cos(rot1 / 180 * -Math.PI) * -shootOffsetWind,
-        y_wind_2 = this.y - Math.sin(rot1 / 180 * -Math.PI) * -shootOffsetWind;
+        x_wind_1 = x + rotCos * shootOffsetWind,
+        y_wind_1 = y + rotSin * shootOffsetWind,
+        x_wind_2 = x - rotCos * shootOffsetWind,
+        y_wind_2 = y - rotSin * shootOffsetWind;
       if (turretColor)
-        Draw.color(Color.valueOf(turretColor));
+        Draw.color(uranium.getRuntimeColor(turretColor));
       Draw.rect(turretRegion[1], x_wind_2, y_wind_2, this.rotation - 90);
       Draw.rect(turretRegion[2], x_wind_1, y_wind_1, this.rotation - 90);
       Draw.rect(turretRegion[0], x, y, this.rotation - 90);
@@ -652,7 +722,7 @@ uranium//------Турель Император
       Draw.alpha(liquid);
       Draw.rect(turretRegion[3], x, y, this.rotation - 90);
       if (turretColor)
-        Draw.color(Color.valueOf(turretColor));
+        Draw.color(uranium.getRuntimeColor(turretColor));
       Draw.alpha(1);
       Draw.rect(turretRegion[4], x_recoil, y_recoil, this.rotation - 90);
       if (turretColor)
@@ -660,8 +730,8 @@ uranium//------Турель Император
       Draw.alpha(liquid);
       Draw.rect(turretRegion[5], x_recoil, y_recoil, this.rotation - 90);
 
+      uranium.drawTurretFuelGlow(this, x, y);
       uranium.turretDrawInTheEnd(this);
     }
   });
-
 

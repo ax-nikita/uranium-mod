@@ -5,12 +5,12 @@ hasLiquids: true
 hasItems: true
 itemCapacity: 120
 liquidCapacity: 20
-itemDuration: 230
-powerProduction: 265
+itemDuration: 460
+powerProduction: 530
 heating: 0.010
 smokeThreshold: 0.48
 explosionRadius: 120   
-explosionDamage: 4000  
+explosionDamage: 16000  
 coolantPower: 0.015
 flashThreshold: 0.34  
 consumes: {
@@ -31,6 +31,4 @@ requirements: [
   aluminium/600
 ]
 category: power
-idleEffect: mineHide
-idleSoundVolume: 4
-idleSound: windowHide
+ambientSoundVolume: 4

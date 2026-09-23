@@ -12,7 +12,7 @@ uranium.addCustomBuild('ciklon', function () {
 
   f_r = () => {
     let
-      tq = uranium.turretQualityGenerate(parent),
+      tq = [4, 0],
       data = {
         exp: 0,
         lvl: 1,
@@ -30,7 +30,8 @@ uranium.addCustomBuild('ciklon', function () {
       data: data,
       _maxSheald: 0,
       _lastDamage: 0,
-      _qualityData: uranium.turretQualityGet(data.turretQuality.q, data.turretQuality.t),
+      _uraniumQualityReady: false,
+      _qualityData: uranium.turretQualityPendingData(),
       getQD(name) {
         return this._qualityData[name];
       },
@@ -47,7 +48,7 @@ uranium.addCustomBuild('ciklon', function () {
         return this._maxSheald;
       },
       updateShooting() {
-        if (this.reload >= this.block.reloadTime) {
+        if (this.reloadCounter >= this.block.reload) {
           let
             type = this.peekAmmo(),
             reloadBoost = 1;
@@ -67,21 +68,28 @@ uranium.addCustomBuild('ciklon', function () {
           if (this.checkLuck()) {
             this.shoot(type);
           };
-          this.reload -= this.block.reloadTime * reloadBoost;
+          this.reloadCounter -= this.block.reload * reloadBoost;
         }
       },
       draw: uranium.drawTurret,
+      // Mindustry 159.7 Turret.updateTile() already calls updateReload(). Uranium
+      // keeps its v126 quality-aware manual reload below, so suppress only the vanilla
+      // base increment; handleReload() still calls updateCooling() for turret fuel.
+      updateReload() {
+      },
       updateTile() {
         this.super$updateTile();
+        this.runAdaptiveBaseUpdate();
 
-        this.baseUpdateTile();
-
-        if (this.hasAmmo() && this.reload < this.block.reloadTime) {
-          this.reload += this.delta() * this.peekAmmo().reloadMultiplier * this.baseReloadSpeed() * this.getReloadMulti();
+        if (this.hasAmmo() && this.reloadCounter < this.block.reload) {
+          this.reloadCounter += this.delta() * this.peekAmmo().reloadMultiplier * this.baseReloadSpeed() * this.getReloadMulti();
         }
       },
       bullet: uranium.t.baseBullet,
       shoot: uranium.t.baseShot,
+      version() {
+        return 3;
+      },
       write(writer) {
         uranium.tileMap = {};
         writer.i(data.lvl);
@@ -93,6 +101,7 @@ uranium.addCustomBuild('ciklon', function () {
         writer.i(data.turretStatusIsset);
         writer.i(data.turretStatusQ);
         writer.i(data.turretStatusT);
+        writer.f(this.getSavedHealthFraction());
       },
       read(read, revision) {
         data.lvl = read.i();
@@ -101,15 +110,18 @@ uranium.addCustomBuild('ciklon', function () {
         this.rotation = read.i();
         data.turretQuality.q = read.i();
         data.turretQuality.t = read.i();
+        this._uraniumQualityReady = true;
         data.turretStatusIsset = read.i();
         data.turretStatusQ = read.i();
         data.turretStatusT = read.i();
+        let savedHealthFraction = revision >= 3 ? read.f() : undefined;
         if (data.turretStatusIsset) {
           this.allResetBoost();
           this.setStatusBoost(data.turretStatusQ, data.turretStatusT);
         } else {
           this.updateLvl();
         };
+        this.restoreSavedHealthFraction(savedHealthFraction, revision);
       }
     });
     return e;
@@ -128,7 +140,7 @@ uranium.addCustomBuild('inkvizitor', function () {
 
   f_r = () => {
     let
-      tq = uranium.turretQualityGenerate(parent),
+      tq = [4, 0],
       data = {
         exp: 0,
         lvl: 1,
@@ -148,7 +160,8 @@ uranium.addCustomBuild('inkvizitor', function () {
       _maxSheald: 0,
       _lastDamage: 0,
       _lastShoot: 0,
-      _qualityData: uranium.turretQualityGet(data.turretQuality.q, data.turretQuality.t),
+      _uraniumQualityReady: false,
+      _qualityData: uranium.turretQualityPendingData(),
       getQD(name) {
         return this._qualityData[name];
       },
@@ -166,7 +179,7 @@ uranium.addCustomBuild('inkvizitor', function () {
       },
       draw: uranium.drawTurret,
       updateShooting() {
-        if (this.reload >= this.block.reloadTime) {
+        if (this.reloadCounter >= this.block.reload) {
           let
             type = this.peekAmmo();
 
@@ -174,7 +187,7 @@ uranium.addCustomBuild('inkvizitor', function () {
           if (this.checkLuck()) {
             this.shoot(type);
           };
-          this.reload -= this.block.reloadTime;
+          this.reloadCounter -= this.block.reload;
           this._lastShoot = 0;
           data.booster += 0.03;
           if (data.booster > 3) {
@@ -183,13 +196,17 @@ uranium.addCustomBuild('inkvizitor', function () {
 
         }
       },
+      // Mindustry 159.7 Turret.updateTile() already calls updateReload(). Uranium
+      // keeps its v126 quality-aware manual reload below, so suppress only the vanilla
+      // base increment; handleReload() still calls updateCooling() for turret fuel.
+      updateReload() {
+      },
       updateTile() {
         this.super$updateTile();
+        this.runAdaptiveBaseUpdate();
 
-        this.baseUpdateTile();
-
-        if (this.hasAmmo() && this.reload < this.block.reloadTime) {
-          this.reload += this.delta() * this.peekAmmo().reloadMultiplier * this.baseReloadSpeed() * this.getReloadMulti() * data.booster;
+        if (this.hasAmmo() && this.reloadCounter < this.block.reload) {
+          this.reloadCounter += this.delta() * this.peekAmmo().reloadMultiplier * this.baseReloadSpeed() * this.getReloadMulti() * data.booster;
         }
         this._lastShoot++;
         if (data.booster > 1 && this._lastShoot > 30) {
@@ -198,6 +215,9 @@ uranium.addCustomBuild('inkvizitor', function () {
       },
       bullet: uranium.t.baseBullet,
       shoot: uranium.t.baseShot,
+      version() {
+        return 3;
+      },
       write(writer) {
         uranium.tileMap = {};
         writer.i(data.lvl);
@@ -210,6 +230,7 @@ uranium.addCustomBuild('inkvizitor', function () {
         writer.i(data.turretStatusIsset);
         writer.i(data.turretStatusQ);
         writer.i(data.turretStatusT);
+        writer.f(this.getSavedHealthFraction());
       },
       read(read, revision) {
         data.lvl = read.i();
@@ -219,15 +240,18 @@ uranium.addCustomBuild('inkvizitor', function () {
         this.rotation = read.f();
         data.turretQuality.q = read.i();
         data.turretQuality.t = read.i();
+        this._uraniumQualityReady = true;
         data.turretStatusIsset = read.i();
         data.turretStatusQ = read.i();
         data.turretStatusT = read.i();
+        let savedHealthFraction = revision >= 3 ? read.f() : undefined;
         if (data.turretStatusIsset) {
           this.allResetBoost();
           this.setStatusBoost(data.turretStatusQ, data.turretStatusT);
         } else {
           this.updateLvl();
         };
+        this.restoreSavedHealthFraction(savedHealthFraction, revision);
       }
     });
     return e;

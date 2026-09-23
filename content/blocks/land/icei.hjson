@@ -4,6 +4,6 @@ speedMultiplier: 1.5
 isLiquid: false
 dragMultiplier: 1.2
 variants: 3
-attributes: { 
-  array: [ 0, 0, 2, 0 ] 
+attributes: {
+  water: 2
 }

@@ -12,11 +12,11 @@ let
     regions[2] = Core.atlas.find(name + "-progress");
 
     Draw.rect(regions[0], t.x, t.y);
-    Draw.color(Color.valueOf(uranium.ammo_colors[num]));
-    Draw.alpha(t.efficiency());
+    Draw.color(uranium.getRuntimeColor(uranium.ammo_colors[num]));
+    Draw.alpha(t.efficiency);
     Draw.rect(regions[1], t.x, t.y);
     if (d.craft_progress >= 1) {
-      Draw.color(Color.valueOf(uranium.ammo_colors[num]));
+      Draw.color(uranium.getRuntimeColor(uranium.ammo_colors[num]));
       Draw.rect(regions[2], t.x, t.y);
     }
   },
@@ -30,10 +30,10 @@ let
     regions[2] = Core.atlas.find(name + "-progress");
 
     Draw.rect(regions[0], t.x, t.y);
-    Draw.color(Color.valueOf(uranium.ammo_colors[num]));
-    Draw.alpha(t.efficiency());
+    Draw.color(uranium.getRuntimeColor(uranium.ammo_colors[num]));
+    Draw.alpha(t.efficiency);
     Draw.rect(regions[1], t.x, t.y);
-    Draw.color(Color.valueOf(uranium.ammo_colors[num]));
+    Draw.color(uranium.getRuntimeColor(uranium.ammo_colors[num]));
     Draw.rect(regions[2], t.x, t.y);
   },
   artAmmoDrawer = (t, d, num) => {
@@ -46,10 +46,10 @@ let
     regions[2] = Core.atlas.find(name + "-progress");
 
     Draw.rect(regions[0], t.x, t.y);
-    Draw.color(Color.valueOf(uranium.ammo_colors[num]));
-    Draw.alpha(t.efficiency());
+    Draw.color(uranium.getRuntimeColor(uranium.ammo_colors[num]));
+    Draw.alpha(t.efficiency);
     Draw.rect(regions[1], t.x, t.y);
-    Draw.color(Color.valueOf(uranium.ammo_colors[num]));
+    Draw.color(uranium.getRuntimeColor(uranium.ammo_colors[num]));
     Draw.rect(regions[2], t.x, t.y);
   },
   ammoLoaderDrawer = (t, d, num) => {
@@ -60,7 +60,7 @@ let
     regions[1] = Core.atlas.find(name + "-light");
 
     Draw.rect(regions[0], t.x, t.y);
-    Draw.color(Color.valueOf(uranium.ammo_colors[num]));
+    Draw.color(uranium.getRuntimeColor(uranium.ammo_colors[num]));
     Draw.rect(regions[1], t.x, t.y);
   };
 
@@ -82,7 +82,7 @@ uranium
         'ammo-loader'
       ],
       power: 10,
-      effects_time: 60,
+      effects_time: 90,
       craft_time: 300
     },
     { //---------| titanium
@@ -101,7 +101,7 @@ uranium
         'ammo-loader'
       ],
       power: 15,
-      effects_time: 60,
+      effects_time: 90,
       craft_time: 360
     },
     { //---------| aluminium
@@ -120,7 +120,7 @@ uranium
         'ammo-loader'
       ],
       power: 15,
-      effects_time: 60,
+      effects_time: 90,
       craft_time: 360
     },
     { //---------| fire
@@ -139,7 +139,7 @@ uranium
         'ammo-loader'
       ],
       power: 15,
-      effects_time: 60,
+      effects_time: 90,
       craft_time: 300
     },
     { //---------| thorium
@@ -158,7 +158,7 @@ uranium
         'ammo-loader'
       ],
       power: 20,
-      effects_time: 60,
+      effects_time: 90,
       craft_time: 420
     },
     { //---------| exp
@@ -177,7 +177,7 @@ uranium
         'ammo-loader'
       ],
       power: 20,
-      effects_time: 60,
+      effects_time: 90,
       craft_time: 360
     },
     { //---------| altit
@@ -196,7 +196,7 @@ uranium
         'ammo-loader'
       ],
       power: 30,
-      effects_time: 60,
+      effects_time: 90,
       craft_time: 360
     },
     { //---------| blue-thorium
@@ -215,7 +215,7 @@ uranium
         'ammo-loader'
       ],
       power: 30,
-      effects_time: 60,
+      effects_time: 90,
       craft_time: 420
     },
     { //---------| ultrafast
@@ -234,7 +234,7 @@ uranium
         'ammo-loader'
       ],
       power: 60,
-      effects_time: 60,
+      effects_time: 90,
       craft_time: 300
     },
     { //---------| uranium
@@ -253,7 +253,7 @@ uranium
         'ammo-loader'
       ],
       power: 40,
-      effects_time: 60,
+      effects_time: 90,
       craft_time: 420
     },
     { //---------| iridium
@@ -272,7 +272,7 @@ uranium
         'ammo-loader'
       ],
       power: 45,
-      effects_time: 60,
+      effects_time: 90,
       craft_time: 480
     },
     { //---------| tritium
@@ -291,7 +291,7 @@ uranium
         'ammo-loader'
       ],
       power: 45,
-      effects_time: 60,
+      effects_time: 90,
       craft_time: 540
     },
     { //---------| iritrium
@@ -310,7 +310,7 @@ uranium
         'ammo-loader'
       ],
       power: 90,
-      effects_time: 60,
+      effects_time: 90,
       craft_time: 360
     }
   ], "ammo_loader", {});
@@ -334,7 +334,7 @@ uranium
         'ammo-factory-9x18'
       ],
       power: 120,
-      effects_time: 40,
+      effects_time: 60,
       craft_time: 30
     },
     { //---------| titanium
@@ -354,7 +354,7 @@ uranium
         'ammo-factory-9x18'
       ],
       power: 150,
-      effects_time: 40,
+      effects_time: 60,
       craft_time: 40
     },
     { //---------| aluminium
@@ -374,7 +374,7 @@ uranium
         'ammo-factory-9x18'
       ],
       power: 180,
-      effects_time: 40,
+      effects_time: 60,
       craft_time: 60
     },
     { //---------| fire
@@ -394,7 +394,7 @@ uranium
         'ammo-factory-9x18'
       ],
       power: 200,
-      effects_time: 40,
+      effects_time: 60,
       craft_time: 65
     },
     { //---------| fire
@@ -414,7 +414,7 @@ uranium
         'ammo-factory-9x18'
       ],
       power: 220,
-      effects_time: 40,
+      effects_time: 60,
       craft_time: 50
     },
     { //---------| thorium
@@ -434,7 +434,7 @@ uranium
         'ammo-factory-9x18'
       ],
       power: 260,
-      effects_time: 40,
+      effects_time: 60,
       craft_time: 90
     },
     { //---------| exp
@@ -454,7 +454,7 @@ uranium
         'ammo-factory-9x18'
       ],
       power: 240,
-      effects_time: 40,
+      effects_time: 60,
       craft_time: 75
     },
     { //---------| altit
@@ -474,7 +474,7 @@ uranium
         'ammo-factory-9x18'
       ],
       power: 320,
-      effects_time: 40,
+      effects_time: 60,
       craft_time: 30
     },
     { //---------| blue-thorium
@@ -494,7 +494,7 @@ uranium
         'ammo-factory-9x18'
       ],
       power: 350,
-      effects_time: 40,
+      effects_time: 60,
       craft_time: 120
     },
     { //---------| ultrafast
@@ -514,7 +514,7 @@ uranium
         'ammo-factory-9x18'
       ],
       power: 380,
-      effects_time: 40,
+      effects_time: 60,
       craft_time: 90
     },
     { //---------| uranium
@@ -534,7 +534,7 @@ uranium
         'ammo-factory-9x18'
       ],
       power: 400,
-      effects_time: 40,
+      effects_time: 60,
       craft_time: 120
     },
     { //---------| iridium
@@ -554,7 +554,7 @@ uranium
         'ammo-factory-9x18'
       ],
       power: 400,
-      effects_time: 40,
+      effects_time: 60,
       craft_time: 130
     },
     { //---------| tritium
@@ -574,7 +574,7 @@ uranium
         'ammo-factory-9x18'
       ],
       power: 420,
-      effects_time: 40,
+      effects_time: 60,
       craft_time: 180
     },
     { //---------| iritrium
@@ -594,7 +594,7 @@ uranium
         'ammo-factory-9x18'
       ],
       power: 440,
-      effects_time: 40,
+      effects_time: 60,
       craft_time: 110
     }
   ], "ammo_factory_firearm", {});
@@ -618,7 +618,7 @@ uranium
         'ammo-factory-12x108'
       ],
       power: 180,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 70
     },
     { //----------| titanium
@@ -638,7 +638,7 @@ uranium
         'ammo-factory-12x108'
       ],
       power: 200,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 70
     },
     { //----------| aluminium
@@ -658,7 +658,7 @@ uranium
         'ammo-factory-12x108'
       ],
       power: 240,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 110
     },
     { //----------| fire
@@ -678,7 +678,7 @@ uranium
         'ammo-factory-12x108'
       ],
       power: 260,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 115
     },
     { //----------| fire
@@ -698,7 +698,7 @@ uranium
         'ammo-factory-12x108'
       ],
       power: 280,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 90
     },
     { //----------| thorium
@@ -718,7 +718,7 @@ uranium
         'ammo-factory-12x108'
       ],
       power: 300,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 85
     },
     { //---------| exp
@@ -738,7 +738,7 @@ uranium
         'ammo-factory-12x108'
       ],
       power: 270,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 110
     },
     { //---------| altit
@@ -758,7 +758,7 @@ uranium
         'ammo-factory-12x108'
       ],
       power: 340,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 100
     },
     { //---------| blue-thorium
@@ -778,7 +778,7 @@ uranium
         'ammo-factory-12x108'
       ],
       power: 300,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 115
     },
     { //---------| ultrafast
@@ -798,7 +798,7 @@ uranium
         'ammo-factory-12x108'
       ],
       power: 480,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 100
     },
     { //---------| uranium
@@ -818,7 +818,7 @@ uranium
         'ammo-factory-12x108'
       ],
       power: 400,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 115
     },
     { //---------| iridium
@@ -838,7 +838,7 @@ uranium
         'ammo-factory-12x108'
       ],
       power: 460,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 130
     },
     { //---------| tritium
@@ -858,7 +858,7 @@ uranium
         'ammo-factory-12x108'
       ],
       power: 500,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 200
     },
     { //---------| iritrium
@@ -878,7 +878,7 @@ uranium
         'ammo-factory-12x108'
       ],
       power: 600,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 140
     }
   ], "large_round_factory_firearm", {});
@@ -902,7 +902,7 @@ uranium
         'ammo-factory-ART'
       ],
       power: 360,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 100
     },
     { //----------| titanium
@@ -922,7 +922,7 @@ uranium
         'ammo-factory-ART'
       ],
       power: 370,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 95
     },
     { //----------| aluminium
@@ -942,7 +942,7 @@ uranium
         'ammo-factory-ART'
       ],
       power: 380,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 90
     },
     { //----------| fire
@@ -962,7 +962,7 @@ uranium
         'ammo-factory-ART'
       ],
       power: 400,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 175
     },
     { //----------| fire
@@ -982,7 +982,7 @@ uranium
         'ammo-factory-ART'
       ],
       power: 600,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 105
     },
     { //----------| thorium
@@ -1002,7 +1002,7 @@ uranium
         'ammo-factory-ART'
       ],
       power: 460,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 180
     },
     { //---------| exp
@@ -1022,7 +1022,7 @@ uranium
         'ammo-factory-ART'
       ],
       power: 480,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 270
     },
     { //---------| altit
@@ -1042,7 +1042,7 @@ uranium
         'ammo-factory-ART'
       ],
       power: 520,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 75
     },
     { //---------| blue-thorium
@@ -1062,7 +1062,7 @@ uranium
         'ammo-factory-ART'
       ],
       power: 600,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 100
     },
     { //---------| ultrafast
@@ -1082,7 +1082,7 @@ uranium
         'ammo-factory-ART'
       ],
       power: 800,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 120
     },
     { //---------| uranium
@@ -1102,7 +1102,7 @@ uranium
         'ammo-factory-ART'
       ],
       power: 600,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 120
     },
     { //---------| iridium
@@ -1122,7 +1122,7 @@ uranium
         'ammo-factory-ART'
       ],
       power: 740,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 300
     },
     { //---------| tritium
@@ -1142,7 +1142,7 @@ uranium
         'ammo-factory-ART'
       ],
       power: 760,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 475
     },
     { //---------| iritrium
@@ -1162,7 +1162,7 @@ uranium
         'ammo-factory-ART'
       ],
       power: 800,
-      effects_time: 80,
+      effects_time: 120,
       craft_time: 200
     }
   ], "ART_factory", {});

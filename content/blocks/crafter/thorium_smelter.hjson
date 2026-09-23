@@ -4,7 +4,7 @@ hasItems: true
 hasPower: true
 hasLiquids: true
 craftTime:160
-liquidCapacity: 2
+liquidCapacity: 400
 consumes: {
 power: 5
 items: {
@@ -19,10 +19,10 @@ metaglass/120
 aluminium/175
 ]
 
-outputLiquid: thorium_oil/120
+outputLiquid: thorium_oil/2.4
 category: crafting
 
-updateEffect: purify
-idleSoundVolume: 0.2
+updateEffect: pulverizeSmall
+updateEffectChance: 0.02666667
+ambientSoundVolume: 0.2
 itemCapacity: 20
-idleSound: spray

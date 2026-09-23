@@ -1,5 +1,4 @@
-type: Item
 color: BDEFFF
 explosiveness: 0.2
 flammability: 2
-radioactivity: 3
+radioactivity: 0

@@ -4,11 +4,10 @@ oreDefault: true
 variants: 3
 oreScale: 50
 oreThreshold: 0.89
-emitLight: true
-lightRadius: 65
-lightColor: e86827
+emitLight: false
+lightRadius: 0
+lightColor: 00000000
 
-mapColor: e86827
+mapColor: 4d9956
 hasColor: true
-minimapColor: e86827
 update: true

@@ -13,11 +13,11 @@ requirements: [
 ]
 
 shootSoundVolume: 2
-coolantMultiplier: 40
+coolantMultiplier: 160
 consumes: {
   liquid: {
     liquid: iridium_oil
-    amount: 0.09
+    amount: 0.0225
     optional: true
     booster: true
   }

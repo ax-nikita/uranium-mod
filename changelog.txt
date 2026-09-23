@@ -1,3 +1,446 @@
+4.11.9.3-test-long-cadence
+- Conservative second-stage adaptive scheduler optimization on top of 4.11.9.2.
+- Deferred VFX maintenance cadence increased from 6 to 12 update calls; skipped visual trials are still replayed in baseMaintenanceUpdate(), preserving event count/probability semantics.
+- Fully passive/headless turret maintenance cadence increased from 12 to 60 update calls; these builds have no deferred gameplay work, while shield/HP/EXP/status/aura/network timers remain in the exact fast lane.
+- Ordinary turret damage no longer wakes deferred maintenance because damage, shield changes, shield-down FX and all gameplay-sensitive timers are already handled immediately outside deferred maintenance.
+- Real level/quality/status changes still wake deferred maintenance immediately through updateLvl(), so runtime cache/cadence transitions remain responsive.
+- Performance journal now reports cadence 60 explicitly.
+- No save format/build revision, network protocol, targeting, reload, damage, shield, HP regen, passive EXP, aura timing/range, status lifetime, balance or audio changes.
+
+4.11.9.2-test-mp-latejoin-hp
+- Minimal multiplayer late-join HP correction on top of 4.11.9.1.
+- Client updateLvl() now restores deterministic Uranium dynamic maxHealth immediately from synchronized level/quality/status data before pending saved-health fraction is applied.
+- Prevents a newly joined client from temporarily keeping Mindustry's static block.health clamp until a later HP/shield synchronization event.
+- No scheduler cadence, gameplay simulation, network packet/protocol, save format/build revision, balance, aura, shield, EXP, VFX, targeting, reload or audio changes.
+
+4.11.9.1-test-adaptive-compat
+- Follow-up compatibility/scheduler correction on top of 4.11.9 adaptive-base.
+- Same-aura status refresh now resets only the gameplay status timer and no longer wakes deferred base maintenance; real status/quality changes still wake immediately through updateLvl().
+- Restored the historical public baseUpdateTile() contract for addons/custom builds: one direct call performs one complete Uranium logical update.
+- Split adaptive-only work into internal baseMaintenanceUpdate(); standard Uranium builds call it through runAdaptiveBaseUpdate(), preserving scheduler compression.
+- First loaded-save adaptive update now preserves gameplay-before-visual maintenance ordering after runtime state initialization.
+- Performance journal remains enabled so aura-heavy tests can verify lower wake/s and improved compression.
+- No save-format/build revision, network protocol, balance, targeting, reload, shield, EXP, aura frequency/range, VFX frequency, or incendiary-ammo audio changes.
+
+4.11.9-test-adaptive-base
+- Test optimization build: adaptive Uranium baseUpdateTile scheduler with lightweight 10-second performance journal.
+- Keeps native Mindustry turret update/shooting/reload paths untouched; only Uranium maintenance polling is reduced.
+- Gameplay-order-sensitive health regen, passive EXP, shield regen/delay, status lifetime and aura due checks stay on an exact per-logical-tick fast lane using cached runtime state.
+- Expensive/general base maintenance now runs adaptively: 6 ticks for deferred visual/status effects and 12 ticks for fully passive state; server shield-network timing stays exact in the fast lane.
+- Skipped base-maintenance ticks are accumulated and replayed for visual effect trials; shield-network timers remain exact per logical tick.
+- Damage/status/level transitions wake deferred maintenance immediately; gameplay and shield-network timers stay exact in the per-logical-tick fast lane while deferred VFX elapsed is preserved.
+- Replaced sampled nanoTime profiler with a low-overhead journal: FPS/heap, base calls vs logical ticks, compression ratio, cadence distribution, runtime state, aura/effect events and custom network traffic.
+- No save-format/build revision changes, no target/reload/DPS/balance changes, and no changes to incendiary-ammo audio in this build.
+
+4.11.8-test-runtime-cache
+- Diagnostic optimization build based on 4.11.6 behavior, retaining aggregate performance logging.
+- Added runtime cache for level/quality/status-derived hot-path values; cache rebuilds only on existing updateLvl transitions.
+- Split shield, aura/status and visual effect work into gated branches so inactive subsystems do not execute every turret update.
+- Skips shield-network update entirely outside an actual server. Network protocol and shield synchronization rules are unchanged.
+- Cached reload multiplier and aura source/resistance values; formulas and aura comparison behavior are unchanged.
+- Replaced per-call getQD/getTurretMap profiling with sampled section timings for EXP, shield core, aura/status, network and VFX to reduce profiler distortion.
+- No save-format, build revision, balance, target interval, aura frequency/range, VFX frequency or quality API changes.
+
+4.11.7.1-test-perf
+- Fixed the diagnostic profiler crash on Rhino JavaAdapter builds by moving all profiler counters into external JavaScript maps keyed by build id.
+- getTurretMap profiler counters are now external and grouped by turret type; profiler no longer writes diagnostic fields into turret wrapper objects.
+- The report suspends instrumentation while collecting its own state snapshot, preventing profiler self-noise.
+- Gameplay logic, network protocol, save format and turret behavior remain identical to 4.11.6 / 4.11.7-test-perf.
+
+4.11.7-test-perf
+- Diagnostic build based on 4.11.6. No balance, save-format, network-protocol or gameplay changes intended.
+- Added low-overhead 5-second aggregate profiler grouped by Uranium turret block type.
+- Measures sampled native Turret.updateTile time, Uranium baseUpdateTile time and reload multiplier time.
+- Counts getQD/getTurretMap activity, shield updates/sync, aura scans/visited targets, quality VFX checks/triggers and custom network TX/RX traffic.
+- Timing uses approximately 1/16 update samples to reduce profiler distortion; counters remain exact.
+- Emits [Uranium-PerfTest] lines to the normal Mindustry log for client/server comparison.
+
+4.11.6
+- Reduced large-turret-array CPU spikes with three low-risk runtime optimizations only.
+- Removed the obsolete per-turret verifiTile scheduler loop; quality anti-reroll remains handled by the existing turretQualityTileCache.
+- Staggered recurring status-aura spatial scans across build IDs while preserving immediate first application, range, strength and ~31-tick refresh cadence.
+- Staggered fixed-period quality VFX across build IDs without changing their period, lifetime or visual parameters.
+- No network protocol, save format, combat formulas, quality API or turret build revision changes.
+
+4.11.5
+- Fixed multiplayer synchronization of Uranium turret shields and status/extra effects.
+- Shield amount is now server-authoritative, throttled to 5 visual updates/s with reliable zero/full transitions and 1-second correction checkpoints.
+- Clients now rebuild transient status-boost fields from synchronized turretStatus data, fixing missing shield bonuses and additional effects after joining or status changes.
+- Fixed saved/networked status restoration being cleared during read/first update; no save format or build revision changes.
+- Moved status aura gameplay updates to the server only and suppressed visual particle work on headless servers.
+
+4.11.4
+- Restored full save compatibility for existing aluminium logistics blocks.
+- Reverted Aluminium Bridge to its original BufferedItemBridge class and serialized build format; existing saves no longer desynchronize when reading bridge tile data.
+- Kept standard aluminium Conveyor, Junction, Router and Transport Junction on native Mindustry implementations; Router Storage remains the only custom JavaScript transport block.
+- Aluminium Transport Junction remains rated at 60 items/s per direction.
+
+4.11.3
+- Removed JavaScript runtime wrappers from standard aluminium logistics blocks; they now use native Mindustry transport implementations only.
+- Aluminium Bridge now uses native ItemBridge transport at 25 items/s.
+- Aluminium Router now uses native Router logic with one-item capacity and speed tuned to avoid bottlenecking a 25 items/s aluminium line.
+- Aluminium Transporter returned to native Junction behavior and is now rated at 60 items/s per direction.
+- Router Storage remains the only JavaScript-driven aluminium transport block, with 10-item storage and 25 items/s aggregate output.
+
+4.11.2
+- Optimized aluminium logistics runtime without changing the 4.11.x throughput targets.
+- Aluminium Conveyor no longer runs a JavaScript update callback every tick; its 25 items/s limiter is evaluated only on real transfer attempts.
+- Aluminium Junction now keeps the native Java update loop and rate-limits only incoming transfers at 25 items/s per direction.
+- Aluminium Bridge now caches its native ItemBuffer once per placed building instead of using reflection every update.
+- Simplified hot-path token accounting for Router, Router Storage and the 100 items/s Aluminium Transporter.
+
+4.11.1
+- Fixed Router Storage being created with an invalid build entity after the 4.11.0 logistics rework.
+- Restored its original GenericCrafter construction path, 10-item storage and normal placement/deconstruction behavior.
+- Kept the intended 25 items/s aggregate output limit and explicit transport-speed stat.
+
+4.11.0
+- Reworked aluminium item logistics so displayed throughput matches real base transfer rates.
+- Aluminium Conveyor, Bridge, Junction, Router and Router Storage now use a real 25 items/s base rate; Junction rate is per direction.
+- Aluminium Transporter now transfers a real 100 items/s per direction, including multiple transfers per update when required.
+- Aluminium Router restored to one-item router semantics; obsolete extra-storage description removed.
+- Router Storage keeps its 10-item capacity and now outputs at 25 items/s aggregate.
+
+4.10.19 - Restored aluminium logistics stats: Aluminium Junction now shows 25 items/s and Aluminium Transporter 100 items/s. No transport mechanics were otherwise changed.
+4.10.18
+- Reduced production particle effect frequency by 1.5x across crafters and ammo factories to improve performance with large factory arrays.
+
+4.10.17
+- Reduced Thorium Drill throughput by another 10% with thorium fuel.
+- Reduced Thorium Drill throughput by another 25% with uranium fuel.
+
+4.10.16
+- Reduced Thorium Drill real extraction throughput by 10% with thorium fuel.
+- Reduced Thorium Drill real extraction throughput by 25% with uranium fuel; uranium fuel remains faster than thorium fuel.
+- Restored the previous Thorium Drill descriptions; this update changes gameplay efficiency only.
+
+4.10.15
+- Reduced Thorium Drill efficiency with thorium fuel by 10%: 1.0x -> 0.90x.
+- Reduced uranium-fuel mode by 25% from its previous value: 1.5x -> 1.125x.
+
+4.10.14
+- Fixed thorium drill retaining the uranium-fuel 1.5x speed boost after switching back to thorium fuel.
+- Uranium boost now checks only the currently active fuel; residual uranium in the liquid buffer no longer grants acceleration.
+
+4.10.8
+- Doubled Atomic Creator liquid uranium fuel consumption: 0.30 -> 0.60 per tick.
+
+4.10.7
+- Reduced liquid uranium fuel output: uranium_oil 9.6 -> 2.4 per tick.
+- Reduced uranium fuel smelter liquid capacity: 3300 -> 400.
+- Increased uranium alloy forge liquid uranium fuel consumption by 4x: 0.6 -> 2.4 per tick.
+
+4.10.6
+- Reduced thorium-oil production rate by 4x: 9.6 -> 2.4 per tick.
+- Reduced thorium-oil consumption in the pure thorium forge by 4x: 2.5 -> 0.625 per tick; material ratio remains ~110 regular thorium per 100 pure thorium.
+- Scaled thorium liquid buffers with the new rates: smelter 1600 -> 400, pure thorium forge 360 -> 90.
+- Rebalanced liquid uranium fuel output: uranium_oil 120 -> 9.6 per tick.
+- Increased uranium fuel smelter liquid capacity from 2 -> 3300 to match roughly one production cycle at the new rate.
+
+4.10.4
+- Rebalanced pure thorium production to approximately 110 regular thorium per 100 pure thorium.
+- Thorium-oil consumption in the pure thorium forge: 0.4 -> 2.5 per tick.
+- Thorium-oil output from the thorium smelter: 60 -> 9.6 per tick.
+
+4.10.3
+- Halved liquid thorium output per production cycle (120 -> 60).
+- Halved uranium fuel cell output per production cycle (2 -> 1).
+- Increased Lizard repair center effectiveness by 50% in both base and boosted modes.
+
+4.10.0
+- Reworked turret quality UI: concise RU/EN descriptions, 1-second world-hover details and stable auto-height layout.
+- Added live DPS display with tier-scaled bars; accounts for loaded ammo, level/quality/status bonuses, coolant and overdrive.
+- Rebalanced combat: stronger Dalh laser, lower Zver fire rate and moderated early-tier coolant scaling.
+- Rebalanced Thorium Drill: light ores -20%, power use +50%, thorium-oil use +20%; hard-ore speed unchanged.
+- Anti-reroll cache is now isolated per tile and turret type, preventing quality rolls from transferring between different turrets.
+
+4.09.11 - Rebalanced shared armature ammunition: damage 240 -> 360 and pierce cap 2 -> 3. Relsa and Tomahawk keep their existing reload rates; projectile damage remains identical for both turrets.
+4.09.10 - Fixed startup/content-load failure from duplicate aluminium_bridge declaration; bridge throughput patch now attaches to the existing HJSON BufferedItemBridge after content initialization, preserving its content ID and save format.
+4.09.9 - Fixed aluminium bridge throughput to match the 25 items/s aluminium conveyor; fixed multi-crafters deleting inputs during recipe-selection probes; fixed turret max-HP recalculation leaving fully repaired turrets stuck around 50-70% health.
+4.09.8 - Reduced Uranium Battery power-texture flicker intensity and frequency while keeping the brighter charge-responsive glow. Gameplay is unchanged.
+4.09.7 - Made uranium_battery_power flicker visibly with held electrical pulses while keeping the local light smoother and bright. Gameplay is unchanged.
+4.09.6 - Restored Uranium Battery electrical flicker and increased uranium_battery_power emissive/local-light brightness. Gameplay is unchanged.
+4.09.5 - Added charge-responsive emissive glow and local green light to Uranium Batteries using the uranium_battery_power texture; gameplay is unchanged.
+4.09.4 - Phoenix and Turtle force shields now use distinct resource-themed colors (Blue Thorium / Uranium); gameplay and balance are unchanged.
+4.09.3 - Rebalanced Phoenix/Turtle shields and Lizard repair center for Mindustry 159.7: fixed legacy ForceProjector cooldown multipliers, meaningful/less wasteful optional resource boosts, and lower repair pulse frequency.
+4.09.2 - Fixed multiplayer wall durability sync; added Udav MK2/MK3 localization keys.
+4.09.1 - Fixed Mindustry 159.7 bullet/splash damage dispatch causing NaN turret HP and splash propagation.
+4.01
+- Fixed Rhino crash in ore optical glow: Color.a is exposed as a numeric field in JavaScript, so calling .a(...) raised TypeError.
+- Dynamic halo alpha now uses Color.set(r, g, b, alpha), which is Rhino-safe on Mindustry 159.7.
+- Removed redundant per-frame writes to already-transparent edge colors; ore spawn/index logic and visual tuning are unchanged.
+
+4.00
+- Ore particle glow now uses additive Fill.light optical gradients instead of scene Drawf.light.
+- Uranium and thorium halos preserve saturated ore hue instead of washing toward white.
+- Thorium JVM tile index/spawn caps are unchanged; only its renderer bridge was replaced.
+
+
+3.98
+- Ore radiation motes now use the native bullet/effect bloom render pass instead of Drawf.light.
+- Uranium and thorium mote palettes are matched to their ore colors and slightly dimmed.
+- Native per-tile ore lighting remains disabled for performance.
+3.97
+- Ториевый VFX полностью вынесен из Rhino в небольшой JVM helper uranium.vfx.ThoriumVfxMod.
+- После WorldLoadEvent Java один раз напрямую индексирует tile.overlay()==Blocks.oreThorium; Tile/позиции не передаются и не кэшируются в JavaScript.
+- В runtime обрабатывается только компактный индекс тория раз в 24 тика; за проход создается максимум 4 обычных Effect-частицы.
+- Постоянный Blocks.oreThorium.emitLight отключен: свет создают только живые фиолетовые частицы через Drawf.light.
+- Удалены camera-local/full-map Rhino scans, reflection-кэши и ручные Trigger.draw/postDraw пути, которые давали visible=0 или резкое падение FPS.
+- Игровая механика, content ID, карты и сериализация не изменены.
+
+3.93
+- Thorium VFX now scans only the current camera rectangle and renders/spawns immediately; no cached Tile/raw-index list.
+- Restored the faint native ore-thorium light path proven to work in 3.76; moving motes add stronger local glow.
+
+3.92
+- Ториевая руда теперь хранится в VFX-индексе только как raw index массива Tiles; Tile-объекты между кадрами не сохраняются.
+- Координаты вычисляются строго по официальной схеме Mindustry: x=index%width, y=floor(index/width), world=x/y*tilesize.
+- Основной рендер переведен на проверенный sorted-batch паттерн Trigger.draw -> Draw.draw(Layer.blockOver, Runnable).
+- Добавлен независимый резервный путь через стандартный Effect.at из Trigger.update, использующий те же raw-координаты; резервная частица увеличена до заметного размера.
+- Убрана зависимость ториевого VFX от tile.worldx()/worldy(), ручного drawOver/postDraw и Rhino Tile wrappers.
+- Механика, карты, content ID и сериализация не изменены.
+
+3.91
+- Ториевые тайлы теперь индексируются напрямую из защищенного Java-поля Tile.overlay через reflection, без Rhino overlay()/overlayID()/drop().
+- Индексация разбита на небольшие пакеты по 1536 тайлов за tick, чтобы не повторять зависания 3.81.
+- Частицы рисуются в Trigger.drawOver на Layer.blockOver, поэтому не скрываются стенами/terrain-блоками; Drawf.light добавляется до Layer.light.
+- Механика, карты, content ID и сериализация не изменены.
+
+3.90: Fixed invisible thorium direct-render particles by explicitly flushing the postDraw pass; improved particle-local glow visibility.
+3.89
+- Thorium ore particles no longer use Effect.at(); direct Trigger.draw renderer uses the complete Java BlockIndexer tile list.
+- Particle body and Drawf.light are generated from the same deterministic per-tile state; no map-wide scans or gameplay changes.
+
+3.89
+- Ториевые VFX больше не строят залежь через JS flood-fill: полный список позиций берется один раз из уже готового внутреннего BlockIndexer.ores Mindustry 159.7.
+- Устраняется ограничение findClosestOre(), из-за которого фактически использовался один representative tile на область.
+- Нет full-map scan: используются только позиции, которые сама игра уже проиндексировала как Items.thorium; каждая клетка имеет независимый таймер частицы.
+- Отражение Java используется только для чтения косметического ore-index после WorldLoadEvent; карты, content ID, сериализация и механика не изменяются.
+
+3.86
+- Исправлен обход залежи тория: координатный flood-fill через Rhino заменен на индексный Tile.array()/Tiles.geti().
+- Если связный обход все еще дает один тайл, выполняется ограниченный локальный поиск в радиусе 26 клеток вокруг подтвержденного движком тайла тория.
+- Полного сканирования карты нет; механика и сохранения не изменены.
+
+3.85
+- Исправлено свечение только единичных тайлов ториевой руды: найденный движком тайл теперь используется как затравка для локального обхода всей связанной залежи по runtime overlayID.
+- ID из .msav больше не используется как runtime ID.
+- Полных сканирований карты нет; механика и сохранения не изменены.
+
+3.84
+- Ториевая руда больше не определяется через Rhino-доступ к tile.overlay()/overlayID().
+- Для поиска используются штатные Java-индексы Mindustry BlockIndexer.hasOre/findClosestOre, те же данные, которые использует AI добычи.
+- Полных сканов карты нет: только небольшая сетка запросов вокруг камеры раз в 75 тиков.
+- Найденные engine Tile используются напрямую для ториевых частиц; локальное фиолетовое свечение существует только вместе с частицей.
+- Добавлен единичный диагностический лог hasOre/blockPresent/candidates без спама.
+
+3.83
+- Исправлено обнаружение ванильной ториевой руды: используется числовой Tile.overlayID(), а не Rhino-сравнение Java-объектов.
+- Индекс руды строится постепенно по 4096 тайлов за кадр, без стартовых full-map scan/retry и зависаний.
+- В 567.msav подтверждено 1445 тайлов ore-thorium; их сохраненный ID 172.
+- Свечение тория теперь существует только вместе с частицами; постоянный emitLight отключен.
+- Анимация ториевых частиц замедлена и приведена к характеру урановых.
+
+3.82 - Thorium VFX safety rollback
+- Removed all full-world thorium cache scans and retry scans introduced in 3.80/3.81.
+- Prevents 500x500 startup stalls while preserving uranium ore VFX and all gameplay mechanics.
+- Vanilla thorium permanent light remains disabled; particle binding awaits inspection of the actual map/save content ID.
+
+[3.81]
+- Fixed vanilla thorium ore VFX detection on maps where Rhino/content proxy identity differs.
+- Cache now builds after full world load and retries safely if an early loader exposes an empty tile state.
+
+v3.80
+- Исправлен путь VFX ванильной ториевой руды: тайлы тория теперь индексируются по всей загруженной карте через реальный drop/ore-thorium, а не через camera-scan.
+- Геометрия частиц и их локальный фиолетовый свет рисуются из одного Trigger.draw-прохода на Layer.debris; постоянного света у руды нет.
+- Vanilla Blocks.oreThorium не заменяется; content ID, карты, сериализация и игровая механика не менялись.
+
+3.79: Fixed Mindustry Rhino parse error in scripts/ores.js (explicit object properties); no gameplay or map changes.
+v3.78
+- Исправлен VFX ванильной ториевой руды: частицы больше не зависят от Effect-entity/sorted callback. Свет добавляется до штатного LightRenderer, а видимая частица рисуется отдельным postDraw-проходом по тем же координатам.
+- У тория по-прежнему нет постоянного базового света: локальное фиолетовое освещение существует только во время жизни частицы.
+- Vanilla ore-thorium/content ID, карты, сериализация и игровая механика не менялись.
+
+v3.77
+- У ванильной ториевой руды полностью убрано постоянное базовое свечение: свет появляется только вместе с анимированными фиолетовыми частицами и плавно исчезает вместе с ними.
+- Ториевый VFX переведён на явный отсортированный world-layer draw-pass с Time.globalTime и camera-local определением ore-thorium; vanilla OreBlock не заменяется.
+- Урановые частицы получили случайный разброс времени следующего появления (±55 тиков при том же среднем интервале) и индивидуальную вариацию яркости, чтобы залежи не светились синхронно.
+- Карты, content ID, сериализация и игровая механика не менялись.
+
+v3.76
+- Урановые частицы замедлены ещё примерно в 2 раза; частота появления снижена ещё на 20% (225–305 тиков).
+- Ванильный торий переведён с ручного Trigger.draw на стандартные Effect entities, создаваемые из Trigger.update после проверки ore-thorium/thorium.
+- Для vanilla ore-thorium добавлен слабый штатный environment light как гарантированный визуальный слой; animated VFX по-прежнему дают отдельные ториевые частицы.
+- Content ID, карты, сериализация и игровая механика не менялись.
+
+v3.75
+- Анимация частиц урановой руды замедлена примерно в 2 раза без увеличения lifetime, чтобы не возрастало число одновременно видимых частиц.
+- Частота появления урановых частиц снижена ещё на 20% (интервал 180–244 тика).
+- VFX ванильной ториевой руды перенесён в отдельный Trigger.draw-проход с определением по overlay.itemDrop/name; vanilla OreBlock не заменяется и не изменяется.
+- Совместимость: content ID, карты, сериализация и игровая механика не менялись.
+
+v3.74
+- Ториевая ванильная руда теперь определяется через Tile.drop()==Items.thorium и получает полноценный runtime VFX без замены vanilla OreBlock.
+- Урановые частицы стали зеленее, получили плавный fade-in без резкой вспышки; частота появления снижена ещё на 20%.
+- Свечение урановых стен усилено на 10%. Стены из чистого тория получили аналогичное холодное свечение на 40% слабее.
+- Совместимость: content ID, карты, сериализация и bullet-механика не менялись.
+
+v3.73
+- Частицы урановой и ториевой руды стали реже и примерно в 3 раза плавнее.
+- Ториевая руда получила аналогичный урановой runtime VFX со своей фиолетовой палитрой.
+- Свечение -remont урановых стен усилено примерно в 2 раза.
+- Частота VFX обычных наноботов +15%, улучшенных -15%; характеристики не менялись.
+
+3.72
+- У урановой руды полностью убрано постоянное базовое освещение; свет дают только радиационные частицы.
+- Для ванильной ториевой руды добавлены редкие холодно-фиолетовые радиоактивные частицы с локальным светом без замены OreBlock/content ID.
+- Свечение -remont слоя урановых стен немного усилено.
+- Вспышка точного контура щита Императора приглушена; постоянная оболочка и базовое halo не ослаблены.
+- Игровая механика, сериализация, content ID и карты не изменены.
+
+3.71
+  - Imperator shield: removed the orbiting/rim-running element; stable shield body, exact boundary and halo remain.
+  - Uranium ore: ambient/base light reduced again; radiation particles remain the main visible light source.
+  - Turret quality-roll sounds reduced by 30% through explicit runtime volume (0.70).
+  - Uranium walls: added a subtle green emissive pass focused on the existing -remont texture plus restrained local light.
+  - Compatibility preserved: no content IDs, save serialization, map binaries or combat mechanics changed.
+
+3.70
+- Щит Императора теперь имеет небольшое временное наложение между циклами, без полусекундного исчезновения.
+- Орбитальная анимация щита замедлена примерно в 3 раза и использует непрерывную глобальную фазу без скачков.
+- Базовое свечение щита усилено, вращающиеся элементы немного приглушены.
+- У урановой руды уменьшено постоянное свечение и примерно вдвое снижена частота радиационных частиц; основной свет по-прежнему дают сами частицы.
+- Игровая механика, сериализация, ID контента и карты не менялись.
+
+3.69
+- Щит Императора стал примерно вдвое менее прозрачным; граница и узлы теперь совершают полный непрерывный оборот без телепортации между циклами.
+- Свечение щита усилено примерно в 3 раза при сохранении точного игрового радиуса.
+- Базовое свечение урановой руды сильно уменьшено; основной свет перенесён на движущиеся радиационные частицы.
+
+[3.68]
+- Усилено свечение турелей от ториевого, уранового и иридиевого топлива; яркость по-прежнему зависит от реального заполнения.
+- Урановая руда получила заметные светящиеся радиационные частицы без возврата опасного drawBase override.
+- Щит Императора стал заметнее и интереснее; визуальная граница теперь точно совпадает с реальным радиусом stats boost и имеет собственное свечение.
+- Частицы Nanobots теперь светятся; Improved Nanobots получили отдельный более выраженный cyan/emerald VFX.
+- Сохранена совместимость сохранений/карт: ID контента, сериализация и игровая механика не менялись.
+
+v3.67
+	Compatibility regression fix:
+	- Removed uranium ore drawBase override that could abort old save/map loading during floor cache rebuild.
+	- Uranium ore dynamic particles now use Mindustry 159.7 Floor.updateRender/renderUpdate instead.
+	- No content IDs, block classes, serialized build state, maps, projectile mechanics or fuel mechanics changed.
+
+v3.66
+	Visual refinement:
+	- Turret fuel glow now scales with purified thorium / uranium / iridium fill level.
+	- Emperor's Shield transparency stabilized; no opaque flashing overlap.
+	- Uranium ore lighting changed to restrained dynamic green shimmer with small radiation motes.
+
+v3.65:
+	- Конечный импакт лазеров стал ярче: усилено локальное свечение и бело-горячее ядро без увеличения радиуса урона.
+	- Следы на земле от Dalh (обычный/Frost/Radiation) уменьшены примерно на 28%; размеры следов Spartan не изменены.
+	- Со стороны турели у основания луча добавлены мелкие коронные искры; характер различается для обычного, морозного и радиационного луча.
+	- Механика, урон и дальность лазеров не изменены.
+
+v3.64:
+	- Исправлен VFX зарядки лазерных турелей: зарядное ядро теперь запускается явным таймером выстрела и каждый кадр следует за текущим поворотом ствола.
+	- Луч и его освещение теперь используют фактическую длину b.fdata после laser absorption, совпадая с Damage.collideLine.
+	- Добавлены отдельные endpoint VFX для Dalh/Spartan и их Frost/Radiation вариантов: искры, дым/холодный пар и энергетический контакт.
+	- В дальней точке луча остаётся неровный след на земле, который постепенно остывает/затухает; характер следа различается для обычного, морозного и радиационного лазера.
+
+v3.63:
+	- Лазеры переведены на штатный loopSound/SoundLoop: звук работает всё время, пока луч реально выжигает цель.
+	- Возвращён зарядный энергетический шар; он следует за текущим положением ствола при повороте турели.
+	- Звук плазмы переработан в сторону формирования и удержания плазменного шара вместо ударно-перкуссионного характера.
+
+v3.62:
+	- Лазеры получили настоящий loop-звук на всё время выжигания, отдельно для Dalh/Spartan и обычного/Frost/Radiation луча.
+	- Полностью переработан энергетический SFX: больше низкочастотной перегрузки, дрожания и электрического crackle; убран характер барабана/кастрюли.
+	- Луч теперь светится по всей фактической линии урона.
+	- Точка зарядки лазера привязана к текущему muzzle и следует за поворотом турели.
+	- Плазменный shot стал круглым; движение передают отдельные частицы и trail.
+	- Prepared plasma визуально усилена примерно x2 по orb/trail/light/aftermath без изменения урона и механики.
+
+v3.61:
+	- Полностью переработан VFX/SFX плазменной «Дружбы», лазерной «Дали» и тяжёлого лазера «Спартан».
+	- Плазма получила отдельные charge/release/trail/impact/post-effect слои; подготовленные выстрелы, Zvezda Legend и Pure Plasm имеют собственную идентичность.
+	- Лазер теперь визуально остаётся на полной длине реального Damage.collideLine во время нанесения урона; добавлены движущиеся искры переполнения и контактные эффекты normal/frost/radiation.
+	- Добавлен 21 оригинальный энергетический звук: тяжёлые низко-средние charge/release/impact слои без тонкого визга и «бульканья», с ограничением одновременного воспроизведения.
+	- Для PowerTurret добавлена только аудио/VFX-маршрутизация bullet-specific shootSound/shootEffect; баллистические ItemTurret не затронуты.
+	- Урон, скорость, lifetime, pierce, status, reload, дальность, питание и топливная механика не менялись.
+
+v3.60:
+	- 12x108 shoot sound cleaned: shorter pre-delay/tail, reduced rumble and harsh upper-mid resonance.
+	- Added real runtime volume control for the custom 12x108 turret shot path; all five 12x108 turrets now use _shootSoundVolume=0.85.
+	- No projectile mechanics, impact audio or VFX changed.
+
+v3.59:
+	- Выстрелы 12x108 дополнительно уменьшены по громкости на 35%.
+	- Общая громкость основных импактов поднята на 15%.
+	- Тихие импакты слегка усилены, самые громкие приглушены; разброс громкости выровнен отдельно для 9x18, 12x108 и 30x173.
+	- Механика и VFX не менялись.
+
+v3.58:
+	- Громкость общего выстрела 12x108 дополнительно снижена на 20% относительно 3.57.
+	- Все основные звуки попадания подняты ровно на 20%.
+	- Повторно вручную переработаны физические импакты firearm/titanium/aluminium/ultrafast/iridium и электрический altit: меньше «жестянки», больше короткого глухого удара, массы и бетонного debris.
+	- Ultrafast сохраняет двойной фазовый удар, Iridium — самый плотный низкий импакт, Altit — короткий электрический snap без длинного металлического звона.
+	- Остальные семейства сверены с текущими VFX/post-effect и сохранены там, где звук уже соответствует эффекту.
+	- Механика и визуальные эффекты не изменялись.
+
+v3.57:
+	- Громкость общего звука выстрела 12x108 снижена на 30%.
+	- Кинетические импакты переработаны: меньше металлического звона, больше короткого глухого удара по плотной поверхности/бетону.
+	- Поднята слышимость тихих impact-сэмплов Altit, Ultrafast и части малых калибров.
+	- Post-effect голубого тория стал заметнее, но остаётся тише основного попадания.
+	- Механики и визуальные эффекты не менялись.
+
+v3.56:
+	- Добавлены отдельные тактильные звуки попадания для 13 семейств боеприпасов во всех трёх калибрах.
+	- Звук запускается именно в момент BulletType.hit; громкость и pitch-range настроены отдельно для 9x18, 12x108 и 30x173.
+	- У типов с выраженным post-effect звук содержит короткий второй слой/хвост, но без длинного визга и без озвучивания каждого frag-снаряда.
+	- Для голубого тория добавлены тихие post/despawn-звуки, соответствующие долгим частицам, летящим вперёд.
+	- Механика, баланс и визуальные эффекты 3.55 не изменялись.
+
+v3.55:
+	- Полностью переработан визуальный язык остальных семейств боеприпасов 9x18, 12x108 и 30x173 без изменения механик.
+	- Каждому типу сохранена собственная роль: кинетика, пламя, взрывные осколки, электричество, фазовые послеобразы, плотный иридиевый пробой, тритиевая энергия и странное свечение иритрия.
+	- Голубой торий сохраняет ключевой эффект долгоживущих частиц, летящих вперёд после попадания; эффект стал более слоистым и плавным.
+	- Зажигательные и взрывные боеприпасы получили уместные остаточные следы; для остальных следы добавлялись только там, где это соответствует природе патрона.
+	- Урановые эффекты версии 3.54 не изменялись.
+
+v3.54:
+	- Остаточные урановые осколки теперь рассеиваются и затухают постепенно, а не пропадают резко.
+	- Визуал uranium frag-пуль заменён на более качественный эффект с использованием знака радиации.
+	- Радиоактивная зона переработана: теперь она распространяется по земле трещинами со свечением, а не кругом.
+	- Для 9x18 центральный остаточный след уменьшен примерно в 5 раз.
+	- Импакт и общее свечение зоны сохранены.
+
+v3.53:
+	- Радиоактивная зона теперь разрастается вслед за реальным разлётом повреждающих frag-пуль.
+	- 9x18: зона чуть больше максимального разлёта small-frag; 12x108/30x173 учитывают цепочку medium-frag -> small-frag.
+	- След 12x108 уменьшен отдельно от радиационной зоны.
+	- Следы попаданий и артиллерийская воронка живут заметно дольше; остывающий 30x173 остаётся в воронке.
+	- Визуал самих урановых frag-пуль улучшен без изменения их характеристик.
+
+v3.52:
+	- Добавлены временные наземные aftermath-эффекты для урановых снарядов 9x18 и 12x108: светящаяся переливающаяся радиация на земле.
+	- Для уранового 30x173 добавлен отдельный aftermath: воронка, свечение и остывающий снаряд/осколок в точке попадания.
+	- Механики, урон, статус, фраги и взаимодействия снарядов не менялись — обновлён только визуал hit/despawn.
+
+v3.51:
+	- Обновлены только визуальные эффекты урановых боеприпасов 9x18, 12x108 и 30x173.
+	- Добавлены новые muzzle flash, trail и impact/explosion эффекты в стиле ванильного Mindustry.
+	- Баланс, урон, статус-эффекты, фраги и механика снарядов не менялись.
+
+v3.50:
+	- Исправлена иконка Императора: на icon теперь отображается основа турели.
+	- 45_ART_imperator-icon.png пересобран как полная составная иконка с базой tier-4-5.
+
+v3.49:
+	- Исправлены иконки иридиевых турелей: Спартан, Томагавк, Инквизитор, Император.
+	- Для tier-4 турелей добавлены/подключены полноценные составные icon-регионы вместо неполных UI-иконок.
+
 v1.0:
 
 ПРЕДМЕТЫ:

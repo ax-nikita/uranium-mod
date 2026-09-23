@@ -1,6 +1,7 @@
-type: junction
+type: Junction
 health: 80
 speed: 0.6
+displayedSpeed: 60
 capacity: 10
 size: 1
 requirements:[

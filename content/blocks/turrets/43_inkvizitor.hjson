@@ -10,11 +10,11 @@ requirements: [
   graphite/200
 ]
 
-coolantMultiplier: 65
+coolantMultiplier: 260
 consumes: {
   liquid: {
     liquid: iridium_oil
-    amount: 0.06
+    amount: 0.015
     optional: true
     booster: true
   }

@@ -21,9 +21,27 @@ uranium.turretQualityEffects = [
   'Legend_effect'
 ];
 
+// Mindustry v6 exposed Block.buildCost. In v159.7 that field was removed;
+// buildTime now uses the same requirements-weighted formula. Recreate the old
+// value explicitly so Uranium quality probabilities and min/max cost filters
+// keep their original balance semantics.
+uranium.getTurretBuildCost = (block) => {
+  let cost = 0;
+  const requirements = block.requirements;
+
+  if (requirements != undefined) {
+    for (let i = 0; i < requirements.length; i++) {
+      const stack = requirements[i];
+      cost += stack.amount * stack.item.cost;
+    }
+  }
+
+  return cost * (block.buildCostMultiplier != undefined ? block.buildCostMultiplier : 1);
+};
+
 uranium.getTurretQualityChance = (block) => {
   let
-    buildCost = Math.sqrt(block.buildCost / 600);
+    buildCost = Math.sqrt(uranium.getTurretBuildCost(block) / 600);
   return [
     1 * buildCost,
     9 * buildCost,
@@ -67,15 +85,16 @@ uranium.turretQualityGenerate = (block, q) => {
   } else if (q == 5) {
     verefyRepeator = 2;
   }
-
+  let
+    turretQualityKeys = Object.keys(uranium.turretQuality[q]);
   while (!verefy) {
-    t = parseInt(Math.random() * uranium.turretQuality[q].length);
+    t = turretQualityKeys[parseInt(Math.random() * turretQualityKeys.length)];
     turretQualityObj = uranium.turretQualityGet(q, t);
     verefy = true;
     if (block.size < turretQualityObj.minSize
       || block.size > turretQualityObj.maxSize
-      || block.buildCost < turretQualityObj.minCost
-      || block.buildCost > turretQualityObj.maxCost
+      || uranium.getTurretBuildCost(block) < turretQualityObj.minCost
+      || uranium.getTurretBuildCost(block) > turretQualityObj.maxCost
       || (turretQualityObj.personal != undefined && 'uranium-mod-' + turretQualityObj.personal != block.name)
       || (turretQualityObj.turretArt != undefined && turretQualityObj.turretArt != block.art)
       || (turretQualityObj.turretType != undefined && turretQualityObj.turretType != block.getObj().type)
@@ -107,6 +126,7 @@ uranium.turretQualityGet = (q, t) => {
       name: 'Name',
       reloadMultiplier: 1,
       powerShots: 0,
+      powerShotsFactor: 1,
       shield: 1,
       shieldRegen: 1,
       shieldRegenDelay: 1,
@@ -187,15 +207,32 @@ uranium.turretQualityGet = (q, t) => {
 
   obj.color = Color.valueOf(obj.color);
   if (obj.name == 'Prototype') {
-    let
+    /* let
       allChar = "QWERTYUIOPASDFGHJKLZXCVBNM";
-    obj.name = Core.bundle.get("uranium-mod.turretQuality." + obj.name) + ' ' + allChar[parseInt(Math.random() * allChar.length)] + parseInt(Math.random() * 100) + parseInt(Math.random() * 100);
+
+    obj.name = Core.bundle.get("uranium-mod.turretQuality." + obj.name) + " " + allChar[parseInt(Math.random() * allChar.length)] + parseInt(Math.random() * 100) + parseInt(Math.random() * 100);
+    print(typeof obj.name); */
+    obj.name = Core.bundle.get("uranium-mod.turretQuality." + obj.name);
+
   } else {
     obj.name = Core.bundle.get("uranium-mod.turretQuality." + obj.name);
   }
 
   return obj;
 }
+
+// Neutral placeholder used only while a newly created building is waiting for
+// its authoritative server quality. It must not look or behave like a real roll.
+uranium.turretQualityPendingData = () => {
+  let obj = uranium.turretQualityGet(4, 0); // structurally complete quality object
+  obj.name = '';
+  obj.reloadMultiplier = 1;
+  obj.maxHealth = 1;
+  obj.effect = undefined;
+  obj.statsBoostEffect = undefined;
+  obj.color = Color.white;
+  return obj;
+};
 
 function wallDraw(t) {
   t.super$draw();
@@ -225,115 +262,13 @@ function wallDraw(t) {
   Draw.reset();
 };
 
-function drawModifiedTurret(t) {
-  t.super$draw();
-  let
-    base_regions = t.getP().regions,
-    rot1 = t.rotation - 90,
-    shootOffset = t.recoil * 1.5 - 0.05,
-    liquid = t.liquids.total() / t.parent.liquidCapacity,
-    turretColor = t.getTurretColor(),
-    regions = [
-      Core.atlas.find(t.getP().name + '-mod'),
-      Core.atlas.find(t.getP().name + "-mod-liquid")
-    ];
-
-
-  if (base_regions[2] != 'error') {
-    if (turretColor)
-      Draw.color(Color.valueOf(turretColor));
-    Draw.rect(base_regions[2], t.x, t.y);
-    if (turretColor)
-      Draw.reset();
-    if (regions[3] != 'error' && liquid > 0.01) {
-      Draw.alpha(liquid);
-      Draw.rect(base_regions[3], t.x, t.y);
-      Draw.alpha(1);
-    }
-  }
-
-  Draw.z(Layer.turret);
-  if (regions[0] != 'error') {
-    if (turretColor)
-      Draw.color(Color.valueOf(turretColor));
-    Draw.rect(regions[0], t.x + Math.sin(rot1 / 180 * Math.PI) * shootOffset, t.y - Math.cos(rot1 / 180 * Math.PI) * shootOffset, t.rotation - 90);
-    if (turretColor)
-      Draw.reset();
-    if (regions[1] != 'error' && liquid > 0.01) {
-      Draw.alpha(liquid);
-      Draw.rect(regions[1], t.x + Math.sin(rot1 / 180 * Math.PI) * shootOffset, t.y - Math.cos(rot1 / 180 * Math.PI) * shootOffset, t.rotation - 90);
-    }
-  } else {
-    if (turretColor)
-      Draw.color(Color.valueOf(turretColor));
-    Draw.rect(base_regions[0], t.x + Math.sin(rot1 / 180 * Math.PI) * shootOffset, t.y - Math.cos(rot1 / 180 * Math.PI) * shootOffset, t.rotation - 90);
-    if (turretColor)
-      Draw.reset();
-    if (base_regions[1] != 'error' && liquid > 0.01) {
-      Draw.alpha(liquid);
-      Draw.rect(base_regions[1], t.x + Math.sin(rot1 / 180 * Math.PI) * shootOffset, t.y - Math.cos(rot1 / 180 * Math.PI) * shootOffset, t.rotation - 90);
-    }
-  }
-
-  uranium.turretDrawInTheEnd(t);
-};
-
-function drawLegendTurret(t) {
-  t.super$draw();
-  let
-    base_regions = t.getP().regions,
-    rot1 = t.rotation - 90,
-    shootOffset = t.recoil * 1.5 - 0.05,
-    liquid = t.liquids.total() / t.parent.liquidCapacity,
-    turretColor = t.getTurretColor(),
-    regions = [
-      Core.atlas.find(t.getP().name + '-legend'),
-      Core.atlas.find(t.getP().name + "-legend-liquid")
-    ];
-
-
-  if (base_regions[2] != 'error') {
-    if (turretColor)
-      Draw.color(Color.valueOf(turretColor));
-    Draw.rect(base_regions[2], t.x, t.y);
-    if (turretColor)
-      Draw.reset();
-    if (regions[3] != 'error' && liquid > 0.01) {
-      Draw.alpha(liquid);
-      Draw.rect(base_regions[3], t.x, t.y);
-      Draw.alpha(1);
-    }
-  }
-
-  Draw.z(Layer.turret);
-  if (regions[0] != 'error') {
-    if (turretColor)
-      Draw.color(Color.valueOf(turretColor));
-    Draw.rect(regions[0], t.x + Math.sin(rot1 / 180 * Math.PI) * shootOffset, t.y - Math.cos(rot1 / 180 * Math.PI) * shootOffset, t.rotation - 90);
-    if (turretColor)
-      Draw.reset();
-    if (regions[1] != 'error' && liquid > 0.01) {
-      Draw.alpha(liquid);
-      Draw.rect(regions[1], t.x + Math.sin(rot1 / 180 * Math.PI) * shootOffset, t.y - Math.cos(rot1 / 180 * Math.PI) * shootOffset, t.rotation - 90);
-    }
-  } else {
-    if (turretColor)
-      Draw.color(Color.valueOf(turretColor));
-    Draw.rect(base_regions[0], t.x + Math.sin(rot1 / 180 * Math.PI) * shootOffset, t.y - Math.cos(rot1 / 180 * Math.PI) * shootOffset, t.rotation - 90);
-    if (turretColor)
-      Draw.reset();
-    if (base_regions[1] != 'error' && liquid > 0.01) {
-      Draw.alpha(liquid);
-      Draw.rect(base_regions[1], t.x + Math.sin(rot1 / 180 * Math.PI) * shootOffset, t.y - Math.cos(rot1 / 180 * Math.PI) * shootOffset, t.rotation - 90);
-    }
-  }
-
-  uranium.turretDrawInTheEnd(t);
+uranium.createNewTurretQuality = function (q, t, obj) {
+  uranium.turretQuality[q][t] = obj;
 };
 
 uranium.turretQuality = [
-  [//Проклятое 0
-    {//--Cursed
+  {//Проклятое 0
+    0: {//--Cursed
       name: 'Cursed',
       reloadMultiplier: 1.3,
       maxHealth: 1.5,
@@ -343,7 +278,7 @@ uranium.turretQuality = [
       shotDamage: 5,
       luck: -100
     },
-    {//--Hungry
+    1: {//--Hungry
       name: 'Hungry',
       reloadMultiplier: 1.3,
       healthRegen: -20,
@@ -351,14 +286,14 @@ uranium.turretQuality = [
       luck: -100,
       rotateSpeedFactor: 1.1
     },
-    {//--Oh_no_its_wall
+    2: {//--Oh_no_its_wall
       name: 'Oh_no_its_wall',
       reloadMultiplier: 0,
       maxHealth: 4,
       reDraw: wallDraw,
       rotateSpeedFactor: 0
     },
-    {//--Plague
+    3: {//--Plague
       name: 'Plague',
       maxHealth: 2,
       healthRegen: 5,
@@ -373,7 +308,7 @@ uranium.turretQuality = [
       luck: -100,
       statsBoostInfection: true
     },
-    {//--War
+    4: {//--War
       name: 'War',
       maxHealth: 1.8,
       reloadMultiplier: 1.45,
@@ -382,11 +317,11 @@ uranium.turretQuality = [
       luck: -100,
       extraSheald: -3000,
       expBoost: 1.1,
-      powerShots: 10,
+      powerShotsFactor: 2.25,
       upAmmoQuality: 1,
       rotateSpeedFactor: 0.8
     },
-    {//--Dead
+    5: {//--Dead
       name: 'Dead',
       maxHealth: 1.3,
       reloadMultiplier: 0.1,
@@ -397,28 +332,28 @@ uranium.turretQuality = [
       extraBulets: 3,
       minCost: 550
     }
-  ],
-  [//Оч плохо 1
-    {//--Broken
+  },
+  {//Оч плохо 1
+    0: {//--Broken
       name: 'Broken',
       reloadMultiplier: 0.8,
       maxHealth: 0.6,
-      powerShots: -10,
+      powerShotsFactor: 0,
       shield: 0.6,
       rotateSpeedFactor: 0.5
     },
-    {//--Bad_barrel
+    1: {//--Bad_barrel
       name: 'Bad_barrel',
       reloadMultiplier: 0.75,
       upAmmoQuality: -2
     },
-    {//--Shield_only
+    2: {//--Shield_only
       name: 'Shield_only',
       maxHealth: 0.1,
       extraHealth: -3000,
       extraSheald: 400,
     },
-    {//--Fragile
+    3: {//--Fragile
       name: 'Fragile',
       maxHealth: 0.5,
       shield: 0.5,
@@ -426,28 +361,28 @@ uranium.turretQuality = [
       extraHealth: -200,
       rotateSpeedFactor: 0.2
     }
-  ],
-  [//Плохо 2
-    {//--Bad
+  },
+  {//Плохо 2
+    0: {//--Bad
       name: 'Bad',
       reloadMultiplier: 0.9,
       maxHealth: 0.9,
       shield: 0.7,
       rotateSpeed: -1
     },
-    {//--Wihout_a_shield
+    1: {//--Wihout_a_shield
       name: 'Wihout_a_shield',
       shield: 0
     },
-    {//--Delayed
+    2: {//--Delayed
       name: 'Delayed',
       reloadMultiplier: 0.9,
       shieldRegen: 0.5,
       shieldRegenDelay: 1.5,
-      powerShots: -5,
+      powerShotsFactor: 0.5,
       rotateSpeedFactor: 0.25
     },
-    {//--Corrosion
+    3: {//--Corrosion
       name: 'Corrosion',
       healthRegen: -10,
       reloadMultiplier: 0.95,
@@ -455,66 +390,66 @@ uranium.turretQuality = [
       effect: 'radiation_effect',
       effectChance: 0.006
     },
-    {//--Silly
+    4: {//--Silly
       name: 'Silly',
       expBoost: 0.75,
     },
-    {//--Independent
+    5: {//--Independent
       name: 'Independent',
       statsBoostResistStrong: 100
     },
-    {//--Broken_sight
+    6: {//--Broken_sight
       name: 'Broken_sight',
       inaccuracyFactor: 3,
       inaccuracy: 1
     },
-    {//--Reduced_ammunition
+    7: {//--Reduced_ammunition
       name: 'Reduced_ammunition',
       typeFastShots: true,
       inaccuracyFactor: 2,
       fastShotsFactor: 0.75
     }
-  ],
-  [//Обычн 3
-    {
+  },
+  {//Обычн 3
+    0: {
       name: 'Common',
       evo: 4,
       expBoost: 0.4,
       evoLvl: 2,
       regionType: 'legend'
     }
-  ],
-  [//Хор 4
-    {//--Good 0
+  },
+  {//Хор 4
+    0: {//--Good 0
       name: 'Good',
       reloadMultiplier: 1.1,
       maxHealth: 1.1,
     },
-    {//--Presisten 1
+    1: {//--Presisten 1
       name: 'Presisten',
       maxHealth: 1.2,
       extraHealth: 200
     },
-    {//--Easli_teach 2
+    2: {//--Easli_teach 2
       name: 'Easli_teach',
       expBoost: 1.4,
     },
-    {//--Lucky 3
+    3: {//--Lucky 3
       name: 'Lucky',
       luck: 10
     },
-    {//--Sturdy_shield 4
+    4: {//--Sturdy_shield 4
       name: 'Sturdy_shield',
       extraSheald: 100,
       shield: 1.3
     },
-    {//--Quick_start 5
+    5: {//--Quick_start 5
       name: 'Quick_start',
       extraSheald: 200,
       extraHealth: 300,
       expBoost: 1.1
     },
-    {//--Nanobots 6
+    6: {//--Nanobots 6
       name: 'Nanobots',
       shieldRegen: 1.2,
       shieldRegenDelay: 0.9,
@@ -524,21 +459,23 @@ uranium.turretQuality = [
       statsBoostHealthFactor: 1.05,
       statsBoostShieldRegen: 1.05,
       statsBoostHealthRegen: 15,
+      effect: 'nanobots',
+      effectChance: 0.0069,
       statsBoostEffect: 'nanobots',
       statsBoostStrong: 1,
-      statsBoostEffectChance: 0.005
+      statsBoostEffectChance: 0.00575
     },
-    {//--Pure_blood 7
+    7: {//--Pure_blood 7
       name: 'Pure_blood',
       healthRegen: 20,
-      powerShots: 5,
+      powerShotsFactor: 1.2,
       statsBoostResistType: 'bad'
     },
-    {//--Self_learning 8
+    8: {//--Self_learning 8
       name: 'Self_learning',
       expUpdate: 2
     },
-    {//--Mustang_mk2 9
+    9: {//--Mustang_mk2 9
       name: 'Mustang_mk2',
       maxHealth: 1.1,
       reloadMultiplier: 1.15,
@@ -551,7 +488,7 @@ uranium.turretQuality = [
       evo: [5, 5],
       evoLvl: 10
     },
-    {//--Minsk_mk2 10
+    10: {//--Minsk_mk2 10
       name: 'Minsk_mk2',
       maxHealth: 1.1,
       reloadMultiplier: 1.2,
@@ -566,7 +503,7 @@ uranium.turretQuality = [
       evoLvl: 10,
       statsBoostResistStrong: 20
     },
-    {//--Rels_mk2 11
+    11: {//--Rels_mk2 11
       name: 'Rels_mk2',
       maxHealth: 1.2,
       reloadMultiplier: 1.3,
@@ -581,27 +518,27 @@ uranium.turretQuality = [
       evoLvl: 10,
       rotateSpeedFactor: 1.1
     },
-    {//--Accurate 12
+    12: {//--Accurate 12
       name: 'Accurate',
       inaccuracyFactor: 0.5,
       inaccuracy: -5,
       rotateSpeedFactor: 0.9
     },
-    {//--Prototype 13
+    13: {//--Prototype 13
       name: 'Prototype',
       inaccuracyFactor: 1.5,
       reloadMultiplier: 1.05,
       regionType: 'proto',
       evo: 5
     },
-    {//--Prototype 14
+    14: {//--Prototype 14
       name: 'Prototype',
       inaccuracyFactor: 0.5,
       reloadMultiplier: 0.95,
       regionType: 'proto',
       evo: 5
     },
-    {//--Zvezda_mk2 15
+    15: {//--Zvezda_mk2 15
       name: 'Zvezda_mk2',
       maxHealth: 1.2,
       reloadMultiplier: 1.2,
@@ -614,7 +551,7 @@ uranium.turretQuality = [
       evo: [5, 13],
       evoLvl: 10
     },
-    {//--Anaconda_mk2 16
+    16: {//--Anaconda_mk2 16
       name: 'Anaconda_mk2',
       maxHealth: 1.1,
       reloadMultiplier: 1.15,
@@ -628,7 +565,7 @@ uranium.turretQuality = [
       evo: [5, 14],
       evoLvl: 10
     },
-    {//--Voshod_mk2 17
+    17: {//--Voshod_mk2 17
       name: 'Voshod_mk2',
       maxHealth: 1.2,
       reloadMultiplier: 1.1,
@@ -643,13 +580,13 @@ uranium.turretQuality = [
       evo: [5, 15],
       evoLvl: 10
     },
-    {//--Extended_ammunition 18
+    18: {//--Extended_ammunition 18
       name: 'Extended_ammunition',
       typeFastShots: true,
       reloadMultiplier: 1.1,
       fastShotsFactor: 1.2
     },
-    {//--Clen_mk2 19
+    19: {//--Clen_mk2 19
       name: 'Clen_mk2',
       maxHealth: 1.3,
       reloadMultiplier: 1.1,
@@ -666,7 +603,7 @@ uranium.turretQuality = [
       evo: [5, 18],
       evoLvl: 10
     },
-    {//--Ceklon_mk2 20
+    20: {//--Ceklon_mk2 20
       name: 'Ceklon_mk2',
       maxHealth: 1.2,
       reloadMultiplier: 1.1,
@@ -681,7 +618,7 @@ uranium.turretQuality = [
       evo: [5, 19],
       evoLvl: 10
     },
-    {//--Udav_mk2 21
+    21: {//--Udav_mk2 21
       name: 'Udav_mk2',
       maxHealth: 1.2,
       reloadMultiplier: 1.15,
@@ -694,7 +631,7 @@ uranium.turretQuality = [
       evo: [5, 20],
       evoLvl: 10
     },
-    {//--Cobra_mk2 22
+    22: {//--Cobra_mk2 22
       name: 'Cobra_mk2',
       maxHealth: 1.2,
       reloadMultiplier: 1.15,
@@ -707,7 +644,7 @@ uranium.turretQuality = [
       evo: [5, 21],
       evoLvl: 10
     },
-    {//--Mole_mk2 23
+    23: {//--Mole_mk2 23
       name: 'Mole_mk2',
       maxHealth: 1.3,
       reloadMultiplier: 1.1,
@@ -722,7 +659,7 @@ uranium.turretQuality = [
       evo: [5, 22],
       evoLvl: 10
     },
-    {//--Dalh_mk2 24
+    24: {//--Dalh_mk2 24
       name: 'Dalh_mk2',
       maxHealth: 1.2,
       extraSheald: 300,
@@ -735,18 +672,18 @@ uranium.turretQuality = [
       evo: [5, 23],
       evoLvl: 10
     }
-  ],
-  [//Качественный 5
-    {//--Accelerated 0
+  },
+  {//Качественный 5
+    0: {//--Accelerated 0
       name: 'Accelerated',
       reloadMultiplier: 1.3,
       shieldRegen: 2,
       shieldRegenDelay: 0.75,
-      powerShots: 5,
+      powerShotsFactor: 1.25,
       statsBoostResistStrong: 10,
       rotateSpeedFactor: 1.5
     },
-    {//--Qualitative 1
+    1: {//--Qualitative 1
       name: 'Qualitative',
       reloadMultiplier: 1.15,
       maxHealth: 1.2,
@@ -756,7 +693,7 @@ uranium.turretQuality = [
       statsBoostResistStrong: 10,
       rotateSpeedFactor: 1.1
     },
-    {//--Grenadier 2
+    2: {//--Grenadier 2
       name: 'Grenadier',
       maxHealth: 1.3,
       reloadMultiplier: 0.9,
@@ -766,15 +703,15 @@ uranium.turretQuality = [
       statsBoostResistStrong: 10,
       rotateSpeedFactor: 0.8
     },
-    {//--Modified_barrel 3
+    3: {//--Modified_barrel 3
       name: 'Modified_barrel',
       reloadMultiplier: 1.25,
-      powerShots: 10,
+      powerShotsFactor: 1.5,
       upAmmoQuality: 1,
       statsBoostResistStrong: 10,
       turretType: 'ItemTurret'
     },
-    {//--Armored 4
+    4: {//--Armored 4
       name: 'Armored',
       armor: 15,
       maxHealth: 1.25,
@@ -783,7 +720,7 @@ uranium.turretQuality = [
       statsBoostResistStrong: 10,
       rotateSpeedFactor: 0.8
     },
-    {//--Mustang_mk3 5
+    5: {//--Mustang_mk3 5
       name: 'Mustang_mk3',
       maxHealth: 1.2,
       reloadMultiplier: 1.3,
@@ -797,7 +734,7 @@ uranium.turretQuality = [
       effect: uranium.turretQualityEffects[6],
       statsBoostResistStrong: 20
     },
-    {//--Improved_nanobots 6
+    6: {//--Improved_nanobots 6
       name: 'Improved_nanobots',
       shieldRegen: 1.3,
       shieldRegenDelay: 0.7,
@@ -807,11 +744,13 @@ uranium.turretQuality = [
       statsBoostHealthFactor: 1.1,
       statsBoostShieldRegen: 1.1,
       statsBoostHealthRegen: 30,
-      statsBoostEffect: 'nanobots',
+      effect: 'nanobots-improved',
+      effectChance: 0.01275,
+      statsBoostEffect: 'nanobots-improved',
       statsBoostStrong: 12,
-      statsBoostEffectChance: 0.01
+      statsBoostEffectChance: 0.0085
     },
-    {//--Teacher 7
+    7: {//--Teacher 7
       name: 'Teacher',
       statsBoost: true,
       minSize: 2,
@@ -822,7 +761,7 @@ uranium.turretQuality = [
       statsBoostStrong: 11,
       statsBoostEffectChance: 0.005
     },
-    {//--Rels_mk3 8
+    8: {//--Rels_mk3 8
       name: 'Rels_mk3',
       maxHealth: 1.2,
       reloadMultiplier: 1.3,
@@ -837,7 +776,7 @@ uranium.turretQuality = [
       statsBoostResistStrong: 20,
       rotateSpeedFactor: 1.2
     },
-    {//--Frost_laser 9
+    9: {//--Frost_laser 9
       name: 'Frost_laser',
       maxHealth: 1.1,
       extraSheald: 200,
@@ -847,13 +786,13 @@ uranium.turretQuality = [
       laserType: 'frost',
       statsBoostResistStrong: 10
     },
-    {//--Rad_laser 10
+    10: {//--Rad_laser 10
       name: 'Rad_laser',
       turretType: 'LaserTurret',
       laserType: 'rad',
       statsBoostResistStrong: 10
     },
-    {//--Prototype 11
+    11: {//--Prototype 11
       name: 'Prototype',
       reloadMultiplier: 1.05,
       minSize: 2,
@@ -863,13 +802,14 @@ uranium.turretQuality = [
       rotateSpeedFactor: 1.2,
       regionType: 'proto'
     },
-    {//--Pure_plasm 12
+    12: {//--Pure_plasm 12
       name: 'Pure_plasm',
       turretType: 'PowerTurret',
       laserType: 'pure_plasm',
+      regionType: 'mk2',
       statsBoostResistStrong: 10
     },
-    {//--Zvezda_mk3 13
+    13: {//--Zvezda_mk3 13
       name: 'Zvezda_mk3',
       maxHealth: 1.3,
       reloadMultiplier: 1.2,
@@ -879,7 +819,7 @@ uranium.turretQuality = [
       personal: '35_laser_turret_zvezda',
       statsBoostResistStrong: 20
     },
-    {//--Anaconda_mk3 14
+    14: {//--Anaconda_mk3 14
       name: 'Anaconda_mk3',
       maxHealth: 1.2,
       reloadMultiplier: 1.25,
@@ -893,7 +833,7 @@ uranium.turretQuality = [
       personal: '33_snap_turret_anaconda',
       statsBoostResistStrong: 20
     },
-    {//--Voshod_mk3 15
+    15: {//--Voshod_mk3 15
       name: 'Voshod_mk3',
       maxHealth: 1.3,
       reloadMultiplier: 1.25,
@@ -906,7 +846,7 @@ uranium.turretQuality = [
       personal: '34_hard_auto_turret_voshod',
       statsBoostResistStrong: 20,
     },
-    {//--Minsk_mk3 16
+    16: {//--Minsk_mk3 16
       name: 'Minsk_mk3',
       maxHealth: 1.2,
       reloadMultiplier: 1.25,
@@ -919,7 +859,7 @@ uranium.turretQuality = [
       personal: '32_auto_turret_scat',
       statsBoostResistStrong: 20
     },
-    {//--Improved_loader_magazine 17
+    17: {//--Improved_loader_magazine 17
       name: 'Improved_loader_magazine',
       typeFastShots: true,
       reloadMultiplier: 1.2,
@@ -927,7 +867,7 @@ uranium.turretQuality = [
       fastShotsFactor: 1.4,
       fastShotsDelay: 0.8
     },
-    {//--Clen_mk3 18
+    18: {//--Clen_mk3 18
       name: 'Clen_mk3',
       maxHealth: 1.4,
       reloadMultiplier: 1.2,
@@ -943,7 +883,7 @@ uranium.turretQuality = [
       personal: '37_ART_Clen',
       statsBoostResistStrong: 20
     },
-    {//--Ceklon_mk3 19
+    19: {//--Ceklon_mk3 19
       name: 'Ceklon_mk3',
       maxHealth: 1.3,
       reloadMultiplier: 1.2,
@@ -958,7 +898,7 @@ uranium.turretQuality = [
       personal: '25_auto_turret_ceklon',
       statsBoostResistStrong: 20
     },
-    {//--Udav_mk3 20
+    20: {//--Udav_mk3 20
       name: 'Udav_mk3',
       maxHealth: 1.3,
       reloadMultiplier: 1.25,
@@ -971,7 +911,7 @@ uranium.turretQuality = [
       personal: '23_auto_turret_udav',
       statsBoostResistStrong: 20
     },
-    {//--Cobra_mk3 21
+    21: {//--Cobra_mk3 21
       name: 'Cobra_mk3',
       maxHealth: 1.35,
       reloadMultiplier: 1.25,
@@ -984,7 +924,7 @@ uranium.turretQuality = [
       personal: '26_snap_turret_cobra',
       statsBoostResistStrong: 20
     },
-    {//--Mole_mk3 22
+    22: {//--Mole_mk3 22
       name: 'Mole_mk3',
       maxHealth: 1.4,
       reloadMultiplier: 1.15,
@@ -998,7 +938,7 @@ uranium.turretQuality = [
       personal: '24_hard_auto_turret',
       statsBoostResistStrong: 20
     },
-    {//--Dalh_mk3 23
+    23: {//--Dalh_mk3 23
       name: 'Dalh_mk3',
       maxHealth: 1.3,
       extraHealth: 150,
@@ -1011,9 +951,9 @@ uranium.turretQuality = [
       rotateSpeedFactor: 2,
       statsBoostResistStrong: 20
     }
-  ],
-  [//--Шедевр 6
-    {//--Masteroiece 0
+  },
+  {//--Шедевр 6
+    0: {//--Masteroiece 0
       name: 'Masteroiece',
       reloadMultiplier: 1.3,
       maxHealth: 1.35,
@@ -1022,12 +962,13 @@ uranium.turretQuality = [
       extraSheald: 200,
       upAmmoQuality: 1,
       expBoost: 0.8,
+      powerShotsFactor: 1.4,
       statsBoostResistStrong: 30,
       rotateSpeedFactor: 1.2,
       fastShotsDelay: 0.8,
       fastShotsFactor: 1.2
     },
-    {//--Gold 1
+    1: {//--Gold 1
       name: 'Gold',
       reloadMultiplier: 1.2,
       extraHealth: 200,
@@ -1039,7 +980,7 @@ uranium.turretQuality = [
       statsBoostResistStrong: 30,
       rotateSpeedFactor: 0.75
     },
-    {//--Holy_grenadier 2
+    2: {//--Holy_grenadier 2
       name: 'Holy_grenadier',
       maxHealth: 1.35,
       extraSheald: 150,
@@ -1051,7 +992,7 @@ uranium.turretQuality = [
       statsBoostResistStrong: 30,
       rotateSpeedFactor: 0.5
     },
-    {//--Emperors_Shield 3
+    3: {//--Emperors_Shield 3
       name: "Emperors_Shield",
       maxHealth: 1.35,
       shield: 1.5,
@@ -1071,7 +1012,7 @@ uranium.turretQuality = [
       statsBoostResistStrong: 30,
       rotateSpeedFactor: 0.75
     },
-    {//--Battle_comrade 4
+    4: {//--Battle_comrade 4
       name: "Battle_comrade",
       maxHealth: 1.3,
       reloadMultiplier: 1.1,
@@ -1087,7 +1028,7 @@ uranium.turretQuality = [
       evo: [6, 9],
       evoLvl: 15
     },
-    {//--Rinbow_laser 5
+    5: {//--Rinbow_laser 5
       name: "Rinbow_laser",
       maxHealth: 1.3,
       expBoost: 1.1,
@@ -1099,7 +1040,7 @@ uranium.turretQuality = [
       statsBoostResistStrong: 30,
       rotateSpeedFactor: 1.1
     },
-    {//--Proc_exp 6
+    6: {//--Proc_exp 6
       name: "Proc_exp",
       maxHealth: 1.2,
       expBoost: 1.6,
@@ -1107,7 +1048,7 @@ uranium.turretQuality = [
       shield: 1.2,
       statsBoostResistStrong: 30
     },
-    {//--Eternal 7
+    7: {//--Eternal 7
       name: "Eternal",
       maxHealth: 1.6,
       shield: 1.4,
@@ -1116,7 +1057,7 @@ uranium.turretQuality = [
       healthRegenFactor: 0.05,
       statsBoostResistStrong: 30
     },
-    {//--Legendary_loader_magazine 8
+    8: {//--Legendary_loader_magazine 8
       name: 'Legendary_loader_magazine',
       typeFastShots: true,
       reloadMultiplier: 1.25,
@@ -1126,7 +1067,7 @@ uranium.turretQuality = [
       fastShotsFactor: 1.6,
       fastShotsDelay: 0.6
     },
-    {//--Veteran 9
+    9: {//--Veteran 9
       name: 'Veteran',
       typeFastShots: true,
       reloadMultiplier: 0.8,
@@ -1134,6 +1075,9 @@ uranium.turretQuality = [
       healthRegenFactor: 0.05,
       expUpdate: 10,
       expBoost: 2,
+      minSize: 2,
+      minCost: 800,
+      statsBoost: true,
       statsBoostAmmoQuality: 2,
       statsBoostShieldFactor: 1.2,
       statsBoostStrong: 32,
@@ -1142,5 +1086,5 @@ uranium.turretQuality = [
       statsBoostExp: 1.2,
       statsBoostResistStrong: 30
     }
-  ]
+  }
 ]

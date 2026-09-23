@@ -5,5 +5,5 @@ isLiquid: false
 dragMultiplier: 1
 variants: 3
 attributes: {
-	array: [ 0, 0, 1.4, 0 ] 
+  water: 1.4
 }

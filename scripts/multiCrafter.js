@@ -4,7 +4,7 @@ const
 uranium.createMultiCrafter = function (craft_map, name, entity_f) {
   entity_f.setBars = function () {
     this.super$setBars();
-    this.bars.add("craftTime", func(ent => {
+    this.addBar("craftTime", func(ent => {
       let
         data = ent.getQD();
       return new Bar(
@@ -14,7 +14,7 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
           return 1;
         }));
     }));
-    this.bars.add("power", func(ent => {
+    this.addBar("power", func(ent => {
       let
         data = ent.getQD();
       return new Bar(
@@ -24,7 +24,7 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
           return 1;
         }));
     }));
-    this.bars.add("ItemsNeeded:", func(ent => {
+    this.addBar("ItemsNeeded:", func(ent => {
       let
         data = ent.getQD();
       return new Bar(
@@ -34,7 +34,7 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
           return 1;
         }));
     }));
-    this.bars.add("item_1", func(ent => {
+    this.addBar("item_1", func(ent => {
       let
         data = ent.getQD(),
         item = ent.getCraftMap()[data.craft_num].consumes_items[0],
@@ -67,7 +67,7 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
         }));
     }));
     if (this.maxItemReq > 1)
-      this.bars.add("item_2", func(ent => {
+      this.addBar("item_2", func(ent => {
         let
           data = ent.getQD(),
           item = ent.getCraftMap()[data.craft_num].consumes_items[1],
@@ -101,7 +101,7 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
           }));
       }));
     if (this.maxItemReq > 2)
-      this.bars.add("item_3", func(ent => {
+      this.addBar("item_3", func(ent => {
         let
           data = ent.getQD(),
           item = ent.getCraftMap()[data.craft_num].consumes_items[2],
@@ -133,7 +133,7 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
             return item_storage;
           }));
       }));
-    this.bars.add("ItemsCrafted:", func(ent => {
+    this.addBar("ItemsCrafted:", func(ent => {
       return new Bar(
         Core.bundle.get("uranium-mod.bars.outputItems") + ":",
         Color.valueOf('454545'),
@@ -141,7 +141,7 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
           return 1;
         }));
     }));
-    this.bars.add("item_c_1", func(ent => {
+    this.addBar("item_c_1", func(ent => {
       let
         data = ent.getQD(),
         item = ent.getCraftMap()[data.craft_num].output_items[0],
@@ -174,7 +174,7 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
           return item_storage;
         }));
     }));
-    this.bars.add("craftProgress", func(ent => {
+    this.addBar("craftProgress", func(ent => {
       let
         data = ent.getQD(),
         time = ent.getCraftMap()[data.craft_num].craft_time / (data.update_time * 2);
@@ -231,77 +231,84 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
             }
           }
         },
+        // IMPORTANT: acceptItem() is a routing probe in Mindustry and may be called
+        // repeatedly before an item is actually transferred. It must never mutate
+        // recipe state or item storage. The legacy implementation switched recipes,
+        // reset progress and deleted old inputs from this callback, which could eat
+        // items without ever completing a craft on current game versions.
         acceptItem(tile, item) {
           if (this.items.total() >= newObj.const.itemCapacity) {
             return false;
-          } else {
-            return this.getNeeded(item);
           }
-
+          return this.getNeeded(item);
+        },
+        getRecipeItemRequirement(recipeNum, item) {
+          let consumes = this.getCraftMap()[recipeNum].consumes_items;
+          for (let i = 0; i < consumes.length; i++) {
+            if (consumes[i][0] == item) {
+              return consumes[i][1];
+            }
+          }
+          return 0;
+        },
+        hasRecipeInputs(recipeNum) {
+          let consumes = this.getCraftMap()[recipeNum].consumes_items;
+          for (let i = 0; i < consumes.length; i++) {
+            if (this.items.get(consumes[i][0]) < consumes[i][1]) {
+              return false;
+            }
+          }
+          return consumes.length > 0;
         },
         getNeeded(item) {
-          let
-            accept = false,
-            new_craft = false,
-            old_craft = d.craft_num,
-            eding = false;
-          for (let i = 0; i < this.getCraftMap()[d.craft_num].consumes_items.length; i++) {
-            let
-              c_item = this.getCraftMap()[d.craft_num].consumes_items[i][0],
-              quontity = this.getCraftMap()[d.craft_num].consumes_items[i][1] * 2;
-            if (!accept && !eding) {
-              if (item == c_item) {
-                if (this.items.get(item) <= quontity) {
-                  accept = true;
-                } else {
-                  eding = true;
-                }
-              }
+          let requirement = this.getRecipeItemRequirement(d.craft_num, item);
+
+          // Keep up to two batches of ingredients for the active recipe.
+          if (requirement > 0 && this.items.get(item) < requirement * 2) {
+            return true;
+          }
+
+          // Never switch recipes while a craft is already in progress or while
+          // the active recipe is fully supplied and waiting for power/update.
+          if (d.craft_progress > 0 || this.hasRecipeInputs(d.craft_num)) {
+            return false;
+          }
+
+          // If idle, another recipe may accept this item. This is only a pure
+          // availability check; the actual recipe switch happens in handleItem().
+          for (let i = 0; i < this.getCraftMap().length; i++) {
+            if (i == d.craft_num) continue;
+            requirement = this.getRecipeItemRequirement(i, item);
+            if (requirement > 0 && this.items.get(item) < requirement * 2) {
+              return true;
             }
           }
-          if (!accept && !eding) {
-            for (let i = 0; i < this.getCraftMap().length; i++) {
-              if (i != d.craft_num && !accept) {
-                for (let j = 0; j < this.getCraftMap()[i].consumes_items.length; j++) {
-                  let
-                    c_item = this.getCraftMap()[i].consumes_items[j][0],
-                    quontity = this.getCraftMap()[i].consumes_items[j][1] * 2;
-                  if (!accept) {
-                    if (item == c_item && this.items.get(item) <= quontity) {
-                      d.craft_num = i;
-                      new_craft = true;
-                      accept = true;
-                    }
-                  }
-                }
-              }
+          return false;
+        },
+        selectRecipeForItem(item) {
+          if (d.craft_progress > 0 || this.hasRecipeInputs(d.craft_num)) return;
+
+          // Prefer the current recipe whenever it can use the delivered item.
+          if (this.getRecipeItemRequirement(d.craft_num, item) > 0) return;
+
+          for (let i = 0; i < this.getCraftMap().length; i++) {
+            if (i == d.craft_num) continue;
+            if (this.getRecipeItemRequirement(i, item) > 0) {
+              d.craft_num = i;
+              return;
             }
           }
-          if (new_craft) {
-            d.craft_progress = 0;
-            for (let i = 0; i < this.getCraftMap()[old_craft].consumes_items.length; i++) {
-              let
-                c_item = this.getCraftMap()[old_craft].consumes_items[i][0],
-                quontity = this.getCraftMap()[old_craft].consumes_items[i][1] * 2,
-                dell = true;
-              for (let j = 0; j < this.getCraftMap()[d.craft_num].consumes_items.length; j++) {
-                let
-                  t_item = this.getCraftMap()[d.craft_num].consumes_items[j][0];
-                if (dell && t_item == c_item) {
-                  dell = false;
-                }
-              }
-              if (dell) {
-                this.items.remove(c_item, quontity * 2);
-              }
-            }
-          }
-          return accept;
+        },
+        handleItem(source, item) {
+          // Recipe changes are committed only when an item is really delivered.
+          // Existing ingredients are intentionally preserved; no silent deletion.
+          this.selectRecipeForItem(item);
+          this.items.add(item, 1);
         },
         outputsItems() {
           return true;
         },
-        update() {
+        updateTile() {
           let
             consume_item = true,
             craft_info = this.getCraftMap()[d.craft_num];
@@ -330,7 +337,7 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
                 }
                 d.craft_progress += this.delta();
 
-                if (d.craft_progress > craft_info.craft_time / (d.update_time * 2)) {
+                if (d.craft_progress >= craft_info.craft_time / (d.update_time * 2)) {
                   for (let i = 0; i < craft_info.consumes_items.length; i++) {
                     let
                       c_item = craft_info.consumes_items[i][0],
@@ -363,9 +370,9 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
           writer.i(d.craft_progress);
         },
         read(read, revision) {
+          this.super$read(read, revision);
           d.craft_num = read.i();
           d.craft_progress = read.i();
-          this.super$read(read, revision);
         },
       });
     return entity;

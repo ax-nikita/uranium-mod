@@ -21,7 +21,8 @@ consumes: {
     ]
   }
 }
-updateEffect: purifystone
+updateEffect: pulverizeSmall
+updateEffectChance: 0.02666667
 category: crafting
 itemCapacity: 10
 outputItem: bronze/3

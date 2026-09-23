@@ -1,18 +1,24 @@
-type: ForceProjector
 health: 1600
 size: 3
 liquidCapacity: 30
 baseExplosiveness: 5
 hasPower: true
 canOverdrive: true
-phaseUseTime: 300
-phaseRadiusBoost: 16
+
+// Late-game wide shield. Tritium is a strategic booster, not a continuous sink.
+phaseUseTime: 3600
+phaseRadiusBoost: 32
+phaseShieldBoost: 1000
 radius: 160
 shieldHealth: 2500
-cooldownNormal: 9
-cooldownLiquid: 15
-cooldownBrokenBase: 20
-basePowerDraw:4
+
+// Mindustry 159.7 treats these as regeneration multipliers/rates.
+// 3.5 * 60 = 210 shield/sec base regeneration.
+cooldownNormal: 3.5
+cooldownLiquid: 1.3
+// ~10.4 s to recover after a full shield break without coolant.
+cooldownBrokenBase: 4
+
 consumes: {
   power: 12
   items: {
@@ -20,15 +26,15 @@ consumes: {
       tritium/1
     ]
     booster: true
-	  optional: true
+    optional: true
   }
 }
 requirements: [
   aluminium/750
-	uranium_brick/55
-	metaglass/850
-	silicon/450
-	greatness_core/1
+  uranium_brick/55
+  metaglass/850
+  silicon/450
+  greatness_core/1
   iritrium/10
 ]
 category: effect

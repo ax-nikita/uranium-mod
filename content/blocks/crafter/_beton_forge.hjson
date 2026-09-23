@@ -19,9 +19,9 @@ consumes: {
     ]
   }
 }
-updateEffect: smelt
+updateEffect: pulverizeSmall
+updateEffectChance: 0.02666667
 category: crafting
-idleSoundVolume: 0.7
-idleSound: conveyor
+ambientSoundVolume: 0.7
 itemCapacity: 10
 outputItem: beton/5

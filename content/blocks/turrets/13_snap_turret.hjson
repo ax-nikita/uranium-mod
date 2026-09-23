@@ -4,6 +4,7 @@ requirements: [
   graphite/40
 	hard_beton/70
 ]
+coolantMultiplier: 3.125
 consumes: {
   liquid: {
     liquid: water

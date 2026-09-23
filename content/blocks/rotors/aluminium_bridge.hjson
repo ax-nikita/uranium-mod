@@ -3,6 +3,7 @@ health: 100
 range: 6
 speed: 0.23
 bufferCapacity: 5
+displayedSpeed: 25
 hasPower: false
 requirements:[
   aluminium/7

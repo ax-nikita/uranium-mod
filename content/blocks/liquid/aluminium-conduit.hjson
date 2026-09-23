@@ -5,7 +5,6 @@ solid: true
 floating: true
 liquidCapacity: 23
 liquidPressure: 10
-leakResistance: 10
 
 requirements: [
   metaglass/10

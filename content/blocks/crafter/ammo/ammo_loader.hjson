@@ -26,11 +26,10 @@ consumes: {
     ]
   }
 }
-
 hasPower: true
 hasItems: true
 hasLiquids: false
 updateEffect: none
 category: crafting
-idleSoundVolume: 0
+ambientSoundVolume: 0
 itemCapacity: 60

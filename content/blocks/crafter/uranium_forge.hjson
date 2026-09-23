@@ -22,7 +22,8 @@ consumes: {
   }
 }
 updateEffect: pulverizeSmall
+updateEffectChance: 0.02666667
 category: crafting
-idleSoundVolume: 0.7
+ambientSoundVolume: 0.7
 itemCapacity: 10
-outputItem: uranium-fuel-cell/2
+outputItem: uranium-fuel-cell/1

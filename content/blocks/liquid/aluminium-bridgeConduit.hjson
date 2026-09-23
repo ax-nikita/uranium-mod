@@ -1,4 +1,4 @@
-type: LiquidExtendingBridge
+type: LiquidBridge
 health: 120
 range: 6
 hasPower: false
@@ -10,5 +10,4 @@ requirements: [
 ]
 liquidCapacity: 23
 liquidPressure: 10
-leakResistance: 10
 category: liquid

@@ -1,5 +1,4 @@
-type: Item
-name: Uranium fuel cell
+name: Uranium rod
 description: Lots of energy in a graphite container.
 color: 6eff2a
-radioactivity: 4
+radioactivity: 1.75

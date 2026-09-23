@@ -16,12 +16,12 @@ consumes: {
   power: 2
   liquid:{
     liquid: uranium_oil
-    amount: 0.30
+    amount: 0.60
   }
 }
 updateEffect: pulverizeSmall
+updateEffectChance: 0.02666667
 category: crafting
-idleSoundVolume: 0.7
+ambientSoundVolume: 0.7
 itemCapacity: 10
-idleSound: splash
 outputItem: uranium-238/11

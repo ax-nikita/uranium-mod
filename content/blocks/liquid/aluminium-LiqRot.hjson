@@ -1,8 +1,6 @@
-type: LiquidRouter
 health: 120
 liquidCapacity: 23
 liquidPressure: 10
-leakResistance: 10
 requirements: [
   metaglass/12
   silicon/6

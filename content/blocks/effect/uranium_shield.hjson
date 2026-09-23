@@ -1,26 +1,31 @@
-type: ForceProjector
 health: 1400
 size: 2
 liquidCapacity: 30
 baseExplosiveness: 2
 hasPower: true
 canOverdrive: true
-phaseUseTime: 360
-phaseRadiusBoost: 16
+
+// Compact high-capacity shield with deliberately slow recovery after a break.
+phaseUseTime: 4500
+phaseRadiusBoost: 24
+phaseShieldBoost: 1200
 radius: 56
-shieldHealth: 2900
-cooldownNormal: 10
-cooldownLiquid: 12
-cooldownBrokenBase: 1
-basePowerDraw: 3
+shieldHealth: 3200
+
+// 2 * 60 = 120 shield/sec base regeneration.
+cooldownNormal: 2
+cooldownLiquid: 1.15
+// ~66.7 s to recover after a full shield break without coolant.
+cooldownBrokenBase: 0.8
+
 consumes: {
-  power: 4
+  power: 5
   items: {
     items: [
       tritium/1
     ]
     booster: true
-	  optional: true
+    optional: true
   }
 }
 requirements: [

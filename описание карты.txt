@@ -1,0 +1,51 @@
+[b][ENG][/b]
+	The modification adds many factories, turrets and mechanics. Inspired by the game Factorio, the mod itself aims to automate item crafting and a variety of defense options.
+
+	[i] Turrets [/i] mod have unique mechanics, require ammunition of a certain caliber and perform different functions. Some turrets and [i] ammo types [/i] are good against a single target, while others are good against clusters of enemies. Also, there are different variations of turrets that are used in the construction of a turret.
+
+	[i] Plants [/i] ammunition 9x18mm, 12x108mm and 30x173mm require [b] copper / bronze / casings and the resource required for the type of cartridge [/b], they are all written in the description of the plant. The type of ammunition changes automatically, depending on the resources that you lead to it.
+
+	All ammo, in addition to the caliber, are divided into types (the materials from which they are made)
+	The main types of ammo:
+	[b] - Normal [/b] - suitable for the beginning of the game, have no area damage, but good one-time damage.
+	[b] - Aluminum [/b] - ammo are suitable for sniper, air defense and boss turrets. Excellent damage and increased rate of fire.
+	[b] - Explosive [/b] - ammo to destroy clusters of enemies. The low flight range prevents sniper turrets from using these ammo effectively.
+	There are other types of ammo, 13 in total for each caliber. In total, 40+ types of ammunition are in fashion (including fittings).
+
+	The patron has a quality, it depends on their type. If you use high quality ammo for low quality turrets, the imp will be damaged.
+	A short list of quality by type of ammo (this information is also in the description of the items):
+	- Ammo quality 1: Regular and incendiary.
+	- Ammo quality 2: Titanium and aluminum.
+	- Ammo quality 3: Pure thorium, altite and burst.
+	- Ammo quality 4: Uranium, thorium and phase.
+	- Ammo quality 5: Tritium, Iridium and Iritrium.
+
+	The modification supports Russian and English, but my knowledge of English does not allow me to make a high-quality translation. If someone active wants to help with translation and fix mistakes, then I will be glad to help.
+
+	I would be glad if you subscribe and add the mod to your favorites.
+
+[b][RU][/b]
+	Модификация добавляет множество заводов, турелей и механик. Вдохновлялся игрой Factorio, сам мод нацелен на автоматизацию крафта предметов и разнообразие вариантов обороны.
+
+	[i]Турели[/i] мода имеют уникальные механики, требуют патроны определенного калибра и исполняют разные функции. Одни турели и [i]типы патрон[/i] хороши против одной цели, а другие против скоплений врагов. Так же, есть разные вариации турелей, которые применяются при строительстве турели.
+
+	[i]Заводы[/i] боеприпасов 9x18мм,12x108мм и 30x173mm требуют [b]медь/бронзу/гильзы и ресурс нужный для типа патрон[/b], все они написаны в описании завода. Тип боеприпаса меняется автоматически, в зависимости от ресурсов который вы к нему поведете.
+
+	Все патроны помимо калибра делятся на типы(материалы из которых они сделаны)
+	Основные типы патрон:
+	[b] - Обычные[/b] - подходят для начала игры, не имеют урона по площади, но хороший разовый урон.
+	[b] - Алюминиумные[/b] - патроны подходят для снайперских,противовоздушных и боссовых турелей. Отличный урон и повышенная скорострельность.
+	[b] - Разрывные[/b] - патроны для уничтожения скоплений врагов. Низкая дальность полета не позволяет эффективно использовать эти патроны снайперским турелям.
+	Есть и другие типы патрон, всего их 13 для каждого калибра. Всего в моде 40+ типов боеприпасов(с учетом арматуры). 
+
+	У патрон есть качество, оно зависит от их типа. Если вы будет использовать патроны высокого качества для турелей с низким качеством ствола, им будет наноситься урон.
+	Краткий список качества по типам патрон(эта информация есть и в описании предметов):
+		- Качество патрон 1: Обычные и зажигательные.
+		- Качество патрон 2: Титановые и алюминиумные.
+		- Качество патрон 3: Чистый торий, алтит и разрвные.
+		- Качество патрон 4: Уран, торий и фазовые.
+		- Качество патрон 5: Тритий, иридиум и иритрий.
+
+	Модификация поддерживает русский и английский языки, но мои знания английского не позволяют сделать перевод качественно. Если кто-то активный хочет помочь с переводом и исправить ошибки, то я буду рад помощи.
+
+	Буду рад если вы подпишитесь и добавить мод в избранное.

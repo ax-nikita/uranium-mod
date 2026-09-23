@@ -23,7 +23,8 @@ consumes: {
   }
 }
 updateEffect: pulverizeSmall
+updateEffectChance: 0.02666667
 category: crafting
-idleSoundVolume: 0.7
+ambientSoundVolume: 0.7
 itemCapacity: 20
 outputItem: iritrium/10

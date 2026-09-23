@@ -23,7 +23,8 @@ consumes: {
   }
 }
 updateEffect: pulverizeSmall
+updateEffectChance: 0.02666667
 category: crafting
-idleSoundVolume: 0.7
+ambientSoundVolume: 0.7
 itemCapacity: 1050
 outputItem: order_core/1

@@ -18,8 +18,9 @@ consumes: {
   }
 }
 updateEffect: pulverizeSmall
+updateEffectChance: 0.02666667
 category: crafting
-idleSoundVolume: 0.8
-idleSound: door
+ambientSoundVolume: 0.8
+ambientSound: door
 itemCapacity: 24
 outputItem: armatura/3

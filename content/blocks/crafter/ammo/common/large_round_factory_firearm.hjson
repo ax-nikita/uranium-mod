@@ -34,8 +34,9 @@ consumes: {
   }
 }
 updateEffect: plasticburn
+updateEffectChance: 0.02666667
 category: crafting
-idleSoundVolume: 0.7
+ambientSoundVolume: 0.7
 itemCapacity: 60
 outputItems: [
   firearm_large_round/1

@@ -20,9 +20,10 @@ consumes: {
     ]
   }
 }
-updateEffect: nuclearsmoke
+updateEffect: reactorsmoke
+updateEffectChance: 0.02666667
 category: crafting
-idleSoundVolume: 0.5
+ambientSoundVolume: 0.5
 itemCapacity: 20
-idleSound: centrifuge
+ambientSound: centrifuge
 outputItem: uranium-235/2
