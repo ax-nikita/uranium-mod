@@ -11,7 +11,7 @@ consumes: {
   ]
  }
 }
-outputLiquid: iridium_oil/240
+outputLiquid: iridium_oil/2.4
 requirements: [
 plastanium/200
 titanium/400

@@ -18,14 +18,26 @@ Events.on(ContentInitEvent, cons(e => {
   const fuelCell = uranium.getI('uranium-fuel-cell');
 
   // Relative to vanilla thorium (radioactivity 1.0, duration x1):
-  // U-238: 0.90x power, 0.90x total energy per item.
-  // U-235: 1.25x power, 2.40x duration = 3.00x total energy.
-  // Fuel cell: 1.75x power, 2.50x duration = 4.375x total energy.
-  // One U-235 costs 4 U-238 + sulfur; one fuel cell costs 1.5 U-235 + graphite,
-  // so each refining step concentrates output without creating net RTG energy.
+  // U-238: 0.90x power, 1.00x duration = 0.90x total energy.
+  //
+  // Vanilla phase fabric is the useful benchmark here:
+  // 0.60x power * 15x duration = 9x thorium energy per item.
+  // One phase fabric costs 4 thorium, so vanilla deliberately rewards refining
+  // radioactive material with roughly 2.25x higher energy density.
+  //
+  // Uranium follows the same principle:
+  // 1 U-235 costs 4 U-238 + sulfur.
+  // Direct RTG value of 4 U-238 = 3.6x thorium energy.
+  // 3.6 * ~2.25 = ~8.1x, therefore U-235 uses duration x6.5:
+  // 1.25x power * 6.5x duration = 8.125x total energy.
+  //
+  // One fuel cell costs 3 U-235 + graphite. Three U-235 already represent
+  // 24.375x thorium energy, so the additional forge step gets a modest
+  // concentration bonus instead of losing energy:
+  // 1.75x power * 17x duration = 29.75x total energy.
   if (u238 != null) rtg.itemDurationMultipliers.put(u238, 1.0);
-  if (u235 != null) rtg.itemDurationMultipliers.put(u235, 2.4);
-  if (fuelCell != null) rtg.itemDurationMultipliers.put(fuelCell, 2.5);
+  if (u235 != null) rtg.itemDurationMultipliers.put(u235, 6.5);
+  if (fuelCell != null) rtg.itemDurationMultipliers.put(fuelCell, 17.0);
 }));
 
 let aluminiumBattery = uranium.createBuild("Battery", "aluminium_battery", {

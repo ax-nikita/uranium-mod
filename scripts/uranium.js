@@ -43,8 +43,19 @@ let
       decayPerTick: 0.32,
       maxPressure: 110,
       detailScale: [1.0, 0.38, 0.18, 0.09],
+
+      // Spawn divisors operate BEFORE EffectState creation.
+      // LOD0 keeps the authored look. LOD1 mainly attacks trails/residue;
+      // hit/muzzle feedback starts thinning only at heavier pressure.
+      hitDivisor: [1, 1, 2, 4],
+      muzzleDivisor: [1, 1, 2, 3],
       trailDivisor: [1, 4, 8, 14],
       residueDivisor: [1, 2, 5, 10],
+
+      // Cached proxy Effects. A proxy is still a real Mindustry Effect, but its
+      // create() method asks the budget before delegating to the original Effect.
+      // This is the important part: rejected VFX never allocate EffectState.
+      wrappedEffects: {},
 
       update() {
         if (Vars.headless) return 0;
@@ -131,15 +142,9 @@ let
       },
 
       registerEffect(e, clip, profileFactor, baseWeight) {
-        const factor = profileFactor == undefined ? 1 : Math.max(1, profileFactor);
-        // EffectState starts at time 0; charge pressure exactly once per effect.
-        if (e.time < 0.5) {
-          this.addVisible(
-            e.x, e.y,
-            clip == undefined ? 70 : clip,
-            (baseWeight == undefined ? 0.12 : baseWeight) * factor
-          );
-        }
+        // Pressure is charged at spawn time by proxy/spawnEffect, never from
+        // Effect.render(). This makes the budget independent of render FPS and
+        // prevents paused EffectStates from repeatedly increasing pressure.
         return this.getLod();
       },
 
@@ -177,9 +182,12 @@ let
         );
         const lod = this.update();
 
-        const table = kind == 'residue'
-          ? this.residueDivisor
-          : this.trailDivisor;
+        let table;
+        if (kind == 'residue') table = this.residueDivisor;
+        else if (kind == 'muzzle') table = this.muzzleDivisor;
+        else if (kind == 'hit') table = this.hitDivisor;
+        else table = this.trailDivisor;
+
         const divisor = table[lod] * this.profileSpawnExtra(factor, lod);
 
         return this.stableModulo(
@@ -189,9 +197,130 @@ let
         );
       },
 
-      // Replacement for BulletType.updateTrailEffects() used by VFX-budgeted
-      // ammunition. Built-in Trail geometry remains untouched; only optional
-      // Effect entities are thinned.
+      getBulletProfileFactor(cal) {
+        if (cal == '9x18') return 2.2;
+        if (cal == '12x108') return 1.4;
+        if (cal == '30x173') return 1.0;
+        if (cal == '' || (typeof cal == 'string' && cal.indexOf('frag') >= 0)) return 2.0;
+        return 1.0;
+      },
+
+      getKindWeight(kind) {
+        if (kind == 'hit') return 0.22;
+        if (kind == 'muzzle') return 0.16;
+        if (kind == 'residue') return 0.30;
+        return 0.07;
+      },
+
+      effectSeed(x, y, salt) {
+        return Math.floor(x * 7.0) * 73856093
+          + Math.floor(y * 7.0) * 19349663
+          + (salt == undefined ? 0 : salt) * 83492791;
+      },
+
+      spawnEffect(effect, x, y, rotation, color, data, kind, weight, seed, salt, profileFactor, clip) {
+        if (effect == undefined || effect == null || effect == Fx.none) return false;
+
+        const useKind = kind == undefined ? 'hit' : kind,
+          useFactor = profileFactor == undefined ? 1 : profileFactor,
+          useWeight = weight == undefined ? this.getKindWeight(useKind) : weight,
+          useClip = clip == undefined
+            ? (effect.clip != undefined && effect.clip > 0 ? effect.clip : 50)
+            : clip,
+          useSeed = seed == undefined
+            ? this.effectSeed(x, y, salt)
+            : seed;
+
+        if (!this.allowVisible(
+          x, y, useClip, useWeight,
+          useSeed, useKind,
+          salt == undefined ? 0 : salt,
+          useFactor
+        )) return false;
+
+        const rot = rotation == undefined ? 0 : rotation,
+          col = color == undefined || color == null ? Color.white : color;
+
+        if (data != undefined && data != null) effect.at(x, y, rot, col, data);
+        else effect.at(x, y, rot, col);
+
+        return true;
+      },
+
+      wrapEffect(effect, kind, profileFactor, weight, salt, clip) {
+        if (effect == undefined || effect == null || effect == Fx.none) return effect;
+
+        const useKind = kind == undefined ? 'hit' : kind,
+          useFactor = profileFactor == undefined ? 1 : profileFactor,
+          useWeight = weight == undefined ? this.getKindWeight(useKind) : weight,
+          useSalt = salt == undefined ? 0 : salt,
+          key = effect.id + ':' + useKind + ':' + useFactor + ':' + useWeight + ':' + useSalt;
+
+        if (this.wrappedEffects[key] != undefined) return this.wrappedEffects[key];
+
+        const source = effect,
+          budget = this,
+          proxy = extend(Effect, {
+            create(x, y, rotation, color, data) {
+              const useClip = clip == undefined
+                ? (source.clip != undefined && source.clip > 0 ? source.clip : 50)
+                : clip;
+              const seed = budget.effectSeed(x, y, useSalt)
+                + Math.floor(Time.time * 4);
+
+              if (budget.allowVisible(
+                x, y, useClip, useWeight,
+                seed, useKind, useSalt, useFactor
+              )) {
+                source.create(x, y, rotation, color, data);
+              }
+            }
+          });
+
+        // Preserve Effect metadata that external code/UI may inspect.
+        proxy.lifetime = source.lifetime;
+        proxy.clip = source.clip;
+        proxy.layer = source.layer;
+        proxy.layerDuration = source.layerDuration;
+        proxy.followParent = source.followParent;
+        proxy.rotWithParent = source.rotWithParent;
+        proxy.baseRotation = source.baseRotation;
+
+        this.wrappedEffects[key] = proxy;
+        return proxy;
+      },
+
+      wrapBulletEffectField(type, key, kind, profileFactor, salt) {
+        if (type == undefined || type == null) return;
+        const effect = type[key];
+        if (effect == undefined || effect == null || effect == Fx.none) return;
+
+        type[key] = this.wrapEffect(
+          effect,
+          kind,
+          profileFactor,
+          this.getKindWeight(kind),
+          salt,
+          effect.clip
+        );
+      },
+
+      wrapBulletEffects(type, cal) {
+        if (type == undefined || type == null) return;
+
+        const factor = this.getBulletProfileFactor(cal),
+          baseSalt = Math.abs(('' + cal).split('').reduce((a, c) => a + c.charCodeAt(0), 0));
+
+        this.wrapBulletEffectField(type, 'hitEffect', 'hit', factor, baseSalt + 11);
+        this.wrapBulletEffectField(type, 'despawnEffect', 'hit', factor, baseSalt + 17);
+        this.wrapBulletEffectField(type, 'shootEffect', 'muzzle', factor, baseSalt + 23);
+        this.wrapBulletEffectField(type, 'smokeEffect', 'muzzle', factor, baseSalt + 29);
+        this.wrapBulletEffectField(type, 'trailEffect', 'trail', factor, baseSalt + 37);
+      },
+
+      // Replacement for BulletType.updateTrailEffects() remains available for
+      // special/manual bullets. Normal BulletType trails are now intercepted by
+      // their proxy trailEffect, so vanilla timing/chance logic stays untouched.
       updateBulletTrail(type, b, weight, salt, profileFactor) {
         if (Vars.headless) return;
 
@@ -303,7 +432,12 @@ let
                 let endLen = b.fdata > 0 ? b.fdata : this.length,
                   ex = b.x + Angles.trnsx(b.rotation(), endLen),
                   ey = b.y + Angles.trnsy(b.rotation(), endLen);
-                this.endpointLiveEffect.at(ex, ey, b.rotation(), this.beamAccentColor);
+                uranium.vfxBudget.spawnEffect(
+                  this.endpointLiveEffect,
+                  ex, ey, b.rotation(), this.beamAccentColor, null,
+                  'hit', 0.18,
+                  b.id * 4099 + Math.floor(b.time / 6), 601, 1.0, 70
+                );
               }
             }
 
@@ -314,7 +448,13 @@ let
               let endLen = b.fdata > 0 ? b.fdata : this.length,
                 ex = b.x + Angles.trnsx(b.rotation(), endLen),
                 ey = b.y + Angles.trnsy(b.rotation(), endLen);
-              this.endpointResidueEffect.at(ex, ey, b.rotation(), this.beamAccentColor);
+              uranium.vfxBudget.spawnEffect(
+                this.endpointResidueEffect,
+                ex, ey, b.rotation(), this.beamAccentColor, null,
+                'residue', 0.35,
+                b.id * 4099 + Math.floor(b.time / Math.max(1, this.endpointResidueInterval != undefined ? this.endpointResidueInterval : 24)),
+                607, 1.0, 90
+              );
             }
           },
           draw(b) {
@@ -469,6 +609,11 @@ let
       };
 
       newObj.const = extend(newObj.getType(), f);
+
+      // Wrap defaults/constructor-provided effects immediately. Later fields set
+      // through customSetting() are wrapped there as well.
+      uranium.vfxBudget.wrapBulletEffects(newObj.const, cal);
+
       if (uranium.bullets[cal] == undefined) {
         uranium.bullets[cal] = [];
       };
@@ -643,8 +788,13 @@ let
     },
 
     createItemTurret(name, cal, f) {
+      // Build/cache the actual BulletType variants once from the turret tier.
+      // init() then assigns those real bullets to ammoTypes; no runtime owner
+      // multiplier is needed.
+      const tierAmmo = uranium.getAmmoForTier(cal, f.tier);
+
       f.init = function () {
-        this.ammo(uranium.getAmmo(cal));
+        this.ammo(tierAmmo);
         uranium.bindTurretCoolant(this);
         this.super$init();
       };
@@ -1757,6 +1907,105 @@ let
       "E9FE31"
     ],
 
+    // Item-ammo policy by turret tier.
+    // damage scales every BulletType damage path owned by the turret:
+    // direct, splash, fragment children and lightning.
+    // reload scales ONLY the ammo's reloadMultiplier contribution.
+    'ammoTierModifiers': [
+      { damage: 1.00, reload: 1.00 }, // tier 1
+      { damage: 1.05, reload: 0.93 }, // tier 2
+      { damage: 1.10, reload: 0.86 }, // tier 3
+      { damage: 1.20, reload: 0.75 }  // tier 4
+    ],
+
+    getAmmoTierModifier(tier) {
+      let t = Math.round(tier == undefined ? 1 : tier);
+      if (t < 1) t = 1;
+      if (t > this.ammoTierModifiers.length) t = this.ammoTierModifiers.length;
+      return this.ammoTierModifiers[t - 1];
+    },
+
+    roundAmmoReloadMultiplier(value) {
+      if (typeof value != 'number' || !isFinite(value)) return 1;
+      return Math.round((value + 1e-9) * 100) / 100;
+    },
+
+    // Cached real BulletType variants used by ItemTurret.ammoTypes.
+    // Tier 1 keeps the original bullet. Tiers 2-4 receive BulletType.copy()
+    // variants with their final combat fields already changed, so vanilla ammo
+    // stats and runtime firing read the same numbers.
+    '_tierAmmoBulletCache': {},
+
+    getTierAmmoBullet(type, tier) {
+      if (type == undefined || type == null) return type;
+
+      let t = Math.round(tier == undefined ? 1 : tier);
+      if (t <= 1) return type;
+      if (t > this.ammoTierModifiers.length) t = this.ammoTierModifiers.length;
+
+      const key = type.id + ':' + t;
+      if (this._tierAmmoBulletCache[key] != undefined) {
+        return this._tierAmmoBulletCache[key];
+      }
+
+      const modifier = this.getAmmoTierModifier(t),
+        copy = type.copy();
+
+      // Register before descending into fragments so recursive/cyclic chains
+      // cannot create duplicate copies.
+      this._tierAmmoBulletCache[key] = copy;
+
+      if (copy.damage != undefined) {
+        copy.damage = type.damage * modifier.damage;
+      }
+      if (copy.splashDamage != undefined) {
+        copy.splashDamage = type.splashDamage * modifier.damage;
+      }
+      if (copy.lightningDamage != undefined && type.lightningDamage >= 0) {
+        copy.lightningDamage = type.lightningDamage * modifier.damage;
+      }
+
+      if (copy.reloadMultiplier != undefined) {
+        copy.reloadMultiplier = this.roundAmmoReloadMultiplier(
+          type.reloadMultiplier * modifier.reload
+        );
+      }
+
+      // Fragment damage is part of the same ammunition economy. BulletType.copy()
+      // is shallow, therefore the fragment chain must be copied recursively;
+      // otherwise changing a fragment would mutate the global ammo definition.
+      if (type.fragBullet != undefined && type.fragBullet != null) {
+        copy.fragBullet = this.getTierAmmoBullet(type.fragBullet, t);
+      }
+
+      return copy;
+    },
+
+    getAmmoForTier(cal, tier) {
+      let ammo = [],
+        calArray;
+
+      const appendCaliber = caliber => {
+        calArray = uranium.bullets[caliber];
+        if (calArray == undefined) return;
+
+        for (let i = 0; i < calArray.length; i++) {
+          ammo.push(calArray[i].shotAmmo);
+          ammo.push(this.getTierAmmoBullet(calArray[i].const, tier));
+        }
+      };
+
+      if (typeof cal == 'string') {
+        appendCaliber(cal);
+      } else {
+        for (let c = 0; c < cal.length; c++) {
+          appendCaliber(cal[c]);
+        }
+      }
+
+      return ammo;
+    },
+
     'effects': {},
 
     'bullets': {},
@@ -1797,6 +2046,20 @@ let
 
           // Uranium-specific metadata (alternate/spread/tier/etc.) remains available on the adapter.
           this.const[key] = value;
+
+          // Bullet effects assigned here are the final values used by Mindustry.
+          // Wrap both Uranium effects and vanilla Fx.* so every hit/muzzle/trail
+          // spawn is gated before EffectState allocation.
+          if (this.type != undefined && ('' + this.type).indexOf('BulletType') >= 0) {
+            const factor = uranium.vfxBudget.getBulletProfileFactor(this.cal);
+            if (key == 'hitEffect' || key == 'despawnEffect') {
+              uranium.vfxBudget.wrapBulletEffectField(this.const, key, 'hit', factor, 101 + obj_keys.length);
+            } else if (key == 'shootEffect' || key == 'smokeEffect') {
+              uranium.vfxBudget.wrapBulletEffectField(this.const, key, 'muzzle', factor, 211 + obj_keys.length);
+            } else if (key == 'trailEffect') {
+              uranium.vfxBudget.wrapBulletEffectField(this.const, key, 'trail', factor, 307 + obj_keys.length);
+            }
+          }
         }
         return this;
       }

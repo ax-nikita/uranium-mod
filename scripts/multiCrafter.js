@@ -1,7 +1,319 @@
 const
   uranium = global.uranium;
 
+// -----------------------------------------------------------------------------
+// MultiCrafter input stats UI
+// Mindustry's normal ConsumeItems stat renders every accepted input as if every
+// item were required at once. MultiCrafter recipes are different: some inputs
+// are common to every recipe while the rest select one recipe. Build two compact
+// icon rows that describe that distinction without changing runtime consumption.
+// -----------------------------------------------------------------------------
+
+function getMultiCrafterInputGroups(craftMap) {
+  let required = [],
+    choice = [],
+    allItems = [],
+    common = {};
+
+  if (craftMap == undefined || craftMap.length == 0) {
+    return { required: required, choice: choice };
+  }
+
+  // Build a unique ordered list of every input item.
+  for (let r = 0; r < craftMap.length; r++) {
+    let consumes = craftMap[r].consumes_items;
+    for (let i = 0; i < consumes.length; i++) {
+      let item = consumes[i][0],
+        found = false;
+
+      for (let j = 0; j < allItems.length; j++) {
+        if (allItems[j] == item) {
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) allItems.push(item);
+    }
+  }
+
+  // An item is "required" only if every recipe consumes it.
+  for (let a = 0; a < allItems.length; a++) {
+    let item = allItems[a],
+      inEveryRecipe = true,
+      minAmount = 2147483647,
+      maxAmount = 0;
+
+    for (let r = 0; r < craftMap.length; r++) {
+      let consumes = craftMap[r].consumes_items,
+        amount = 0;
+
+      for (let i = 0; i < consumes.length; i++) {
+        if (consumes[i][0] == item) {
+          amount = consumes[i][1];
+          break;
+        }
+      }
+
+      if (amount <= 0) {
+        inEveryRecipe = false;
+        break;
+      }
+
+      if (amount < minAmount) minAmount = amount;
+      if (amount > maxAmount) maxAmount = amount;
+    }
+
+    if (inEveryRecipe) {
+      required.push([item, minAmount, maxAmount]);
+      common[item.id] = true;
+    }
+  }
+
+  // Everything else is a selectable recipe ingredient. Keep one icon per item;
+  // show the amount range when different recipes use different quantities.
+  for (let a = 0; a < allItems.length; a++) {
+    let item = allItems[a];
+    if (common[item.id]) continue;
+
+    let minAmount = 2147483647,
+      maxAmount = 0,
+      found = false;
+
+    for (let r = 0; r < craftMap.length; r++) {
+      let consumes = craftMap[r].consumes_items;
+      for (let i = 0; i < consumes.length; i++) {
+        if (consumes[i][0] == item) {
+          let amount = consumes[i][1];
+          if (amount < minAmount) minAmount = amount;
+          if (amount > maxAmount) maxAmount = amount;
+          found = true;
+        }
+      }
+    }
+
+    if (found) choice.push([item, minAmount, maxAmount]);
+  }
+
+  return { required: required, choice: choice };
+}
+
+function addMultiCrafterInputIcon(row, entry) {
+  let item = entry[0],
+    minAmount = entry[1],
+    maxAmount = entry[2],
+    amountText = minAmount == maxAmount
+      ? '' + minAmount
+      : minAmount + '-' + maxAmount,
+    icon = new Stack();
+
+  icon.add(new Image(item.uiIcon).setScaling(Scaling.fit));
+
+  let amount = new Table();
+  amount.left().bottom();
+  amount.add(amountText).style(Styles.outlineLabel);
+  icon.add(amount);
+
+  StatValues.withTooltip(icon, item, true);
+  row.add(icon).size(32).padRight(4);
+}
+
+function addMultiCrafterInputRow(table, titleKey, entries, emptyKey) {
+  let card = new Table();
+  card.left();
+  card.background(Tex.button);
+
+  let title = new Table();
+  title.left();
+  title.add(Core.bundle.get(titleKey))
+    .color(Pal.accent)
+    .style(Styles.outlineLabel)
+    .padLeft(8)
+    .padTop(4)
+    .padBottom(3);
+  card.add(title).growX().left();
+  card.row();
+
+  let items = new Table();
+  items.left();
+
+  if (entries.length == 0) {
+    items.add(Core.bundle.get(emptyKey))
+      .color(Color.lightGray)
+      .padLeft(8)
+      .padBottom(6)
+      .padRight(8);
+  } else {
+    for (let i = 0; i < entries.length; i++) {
+      addMultiCrafterInputIcon(items, entries[i]);
+    }
+  }
+
+  card.add(items).growX().left().padLeft(6).padRight(4).padBottom(5);
+  table.add(card).growX().left().padTop(2).padBottom(2);
+  table.row();
+}
+
+
+function formatMultiCrafterAmount(minAmount, maxAmount) {
+  return minAmount == maxAmount
+    ? '' + minAmount
+    : minAmount + '-' + maxAmount;
+}
+
+function createMultiCrafterGroupHeaderBar(bundleKey) {
+  return func(ent => new Bar(
+    Core.bundle.get(bundleKey) + ':',
+    Color.valueOf('454545'),
+    floatp(() => 1)
+  ));
+}
+
+function createMultiCrafterGroupItemBar(index, groupName, groups) {
+  return func(ent => {
+    let group = groups[groupName],
+      entry = index < group.length ? group[index] : null,
+      item_name,
+      item_quontity,
+      item_storage,
+      item_color;
+
+    if (!entry) {
+      item_name = 'none';
+      item_quontity = '';
+      item_color = '505050';
+    } else {
+      item_name = entry[0].localizedName + ': ';
+      item_quontity = formatMultiCrafterAmount(entry[1], entry[2]);
+      item_color = entry[0].color;
+    }
+
+    return new Bar(
+      item_name + item_quontity,
+      Color.valueOf(item_color),
+      floatp(() => {
+        if (!entry) return 0;
+
+        let item = entry[0],
+          currentRecipe = ent.getCraftMap()[ent.getQD().craft_num],
+          target = 0;
+
+        for (let i = 0; i < currentRecipe.consumes_items.length; i++) {
+          let consumes = currentRecipe.consumes_items[i];
+          if (consumes[0] == item) {
+            target = consumes[1];
+            break;
+          }
+        }
+
+        if (target <= 0) return 0;
+
+        item_storage = ent.items.get(item) / target;
+        if (item_storage > 1) item_storage = 1;
+        return item_storage;
+      })
+    );
+  });
+}
+
+
+function getCurrentRecipeItemRequirement(recipe, item) {
+  for (let i = 0; i < recipe.consumes_items.length; i++) {
+    if (recipe.consumes_items[i][0] == item) {
+      return recipe.consumes_items[i][1];
+    }
+  }
+  return 0;
+}
+
+function addMultiCrafterDisplayIcon(table, build, entry, currentRecipe, isChoice) {
+  let item = entry[0],
+    minAmount = entry[1],
+    maxAmount = entry[2],
+    currentRequirement = getCurrentRecipeItemRequirement(currentRecipe, item),
+    amountText = currentRequirement > 0
+      ? '' + currentRequirement
+      : (minAmount == maxAmount ? '' + minAmount : minAmount + '-' + maxAmount),
+    hasEnough = currentRequirement <= 0 || build.items.get(item) >= currentRequirement,
+    stack = new Stack(),
+    image = new Image(item.uiIcon),
+    amount = new Table();
+
+  image.setScaling(Scaling.fit);
+
+  if (isChoice && currentRequirement <= 0) {
+    image.setColor(0.55, 0.55, 0.55, 0.65);
+  } else if (!hasEnough) {
+    image.setColor(1.0, 1.0, 1.0, 0.85);
+  }
+
+  amount.left().bottom();
+  amount.add(amountText).style(Styles.outlineLabel);
+
+  stack.add(image);
+  stack.add(amount);
+
+  StatValues.withTooltip(stack, item, true);
+  table.add(stack).size(34).pad(2);
+}
+
+function addMultiCrafterDisplaySection(table, build, titleKey, entries, currentRecipe, isChoice) {
+  if (entries.length == 0) return;
+
+  table.left();
+  table.add(Core.bundle.get(titleKey) + ':')
+    .left()
+    .color(Pal.accent)
+    .style(Styles.outlineLabel)
+    .padTop(4)
+    .padBottom(2);
+  table.row();
+
+  let icons = new Table();
+  icons.left();
+
+  for (let i = 0; i < entries.length; i++) {
+    addMultiCrafterDisplayIcon(icons, build, entries[i], currentRecipe, isChoice);
+    if ((i + 1) % 4 == 0 && i + 1 < entries.length) {
+      icons.row();
+    }
+  }
+
+  table.add(icons).left();
+  table.row();
+}
+
 uranium.createMultiCrafter = function (craft_map, name, entity_f) {
+  // Keep the grouped recipe metadata in a Rhino closure. Do not store/read it
+  // through Building.block: JavaAdapter does not reliably expose arbitrary JS
+  // properties through the generated Java Block reference.
+  const inputGroups = getMultiCrafterInputGroups(craft_map);
+
+  entity_f.setStats = function () {
+    this.super$setStats();
+
+    // Hide GenericCrafter/ConsumeItems' misleading all-inputs-at-once row.
+    this.stats.remove(Stat.input);
+
+    const groups = inputGroups;
+
+    this.stats.add(Stat.input, cons(table => {
+      table.left();
+      addMultiCrafterInputRow(
+        table,
+        'uranium-mod.stats.requiredResources',
+        groups.required,
+        'uranium-mod.stats.noRequiredResources'
+      );
+      addMultiCrafterInputRow(
+        table,
+        'uranium-mod.stats.choiceResources',
+        groups.choice,
+        'uranium-mod.stats.noChoiceResources'
+      );
+    }));
+  };
+
   entity_f.setBars = function () {
     this.super$setBars();
     this.addBar("craftTime", func(ent => {
@@ -219,6 +531,30 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
         },
         getP() {
           return newObj.const;
+        },
+        displayConsumption(table) {
+          let currentRecipe = this.getCraftMap()[d.craft_num],
+            groups = inputGroups;
+
+          table.left();
+
+          addMultiCrafterDisplaySection(
+            table,
+            this,
+            'uranium-mod.ui.requiredResources',
+            groups.required,
+            currentRecipe,
+            false
+          );
+
+          addMultiCrafterDisplaySection(
+            table,
+            this,
+            'uranium-mod.ui.choiceResources',
+            groups.choice,
+            currentRecipe,
+            true
+          );
         },
         draw() {
           for (let i = 0; i < this.getCraftMap()[d.craft_num].regions.length; i++) {

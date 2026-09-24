@@ -369,6 +369,8 @@ uranium //-------------| firearm
     trailEffect: uranium.getEffect('firearm-trail'),
     trailChance: 0.18,
     trailInterval: 0,
+    trailLength: 7,
+    trailWidth: 1.05,
     trailRotation: true,
     lightColor: Color.valueOf("F1C60F"),
     lightRadius: 9,
@@ -395,6 +397,8 @@ uranium //-------------| titanium
     trailEffect: uranium.getEffect('titanium-trail'),
     trailChance: 0.18,
     trailInterval: 0,
+    trailLength: 7,
+    trailWidth: 1.05,
     trailRotation: true,
     lightColor: Color.valueOf("2093FF"),
     lightRadius: 13,
@@ -421,6 +425,8 @@ uranium //-------------| aluminium
     trailEffect: uranium.getEffect('aluminium-trail'),
     trailChance: 0.18,
     trailInterval: 0,
+    trailLength: 7,
+    trailWidth: 1.05,
     trailRotation: true,
     lightColor: Color.valueOf("F4F7F8"),
     lightRadius: 10,
@@ -485,6 +491,8 @@ uranium //-------------| thorium
     trailEffect: uranium.getEffect('thorium-trail'),
     trailChance: 0.14,
     trailInterval: 0,
+    trailLength: 7,
+    trailWidth: 1.05,
     trailRotation: true,
     lightColor: Color.valueOf("FF79C3"),
     lightRadius: 16,
@@ -574,8 +582,8 @@ uranium //-------------| blue-thorium
     trailEffect: Fx.none,
     trailChance: 0,
     trailInterval: 0,
-    trailLength: 4,
-    trailWidth: 0.9,
+    trailLength: 7,
+    trailWidth: 1.05,
     trailRotation: true,
     lightColor: Color.valueOf("00DCEB"),
     lightRadius: 17,
@@ -628,19 +636,13 @@ uranium //-------------| ultrafast
 uranium //-------------| uranium
   .createBullet("BasicBulletType", '9x18', {
     despawned(b) {
-      uranium.vfxBudget.addVisible(b.x, b.y, 70, 4.0);
       this.super$despawned(b);
-      if (uranium.vfxBudget.allowVisible(
-        b.x, b.y, 70, 0.0,
-        b.id,
-        'residue',
-        915,
-        15
-      )) {
-        uranium.getEffect('uranium-residue-small').at(
-          b.x, b.y, b.rotation(), this.hitColor
-        );
-      }
+      uranium.vfxBudget.spawnEffect(
+        uranium.getEffect('uranium-residue-small'),
+        b.x, b.y, b.rotation(), this.hitColor, null,
+        'residue', 4.0 / 15.0,
+        b.id, 915, 15, 70
+      );
     }
   })
   .ezAmmo("uranium")
@@ -686,8 +688,8 @@ uranium //-------------| iridium
     trailChance: 0.16,
     trailInterval: 0,
     trailRotation: true,
-    trailLength: 5,
-    trailWidth: 0.75,
+    trailLength: 7,
+    trailWidth: 1.05,
     lightColor: Color.valueOf("EAF7FF"),
     lightRadius: 11,
     lightOpacity: 0.15,
@@ -1054,20 +1056,13 @@ uranium //-------------| ultrafast
 uranium //-------------| uranium
   .createBullet("BasicBulletType", '12x108', {
     despawned(b) {
-      uranium.vfxBudget.addVisible(b.x, b.y, 120, 5.0);
       this.super$despawned(b);
-
-      if (uranium.vfxBudget.allowVisible(
-        b.x, b.y, 120, 0.0,
-        b.id,
-        'residue',
-        1271,
-        10
-      )) {
-        uranium.getEffect('uranium-residue-medium').at(
-          b.x, b.y, b.rotation(), this.hitColor
-        );
-      }
+      uranium.vfxBudget.spawnEffect(
+        uranium.getEffect('uranium-residue-medium'),
+        b.x, b.y, b.rotation(), this.hitColor, null,
+        'residue', 5.0 / 10.0,
+        b.id, 1271, 10, 120
+      );
     }
   })
   .ezAmmo("uranium")
@@ -1460,34 +1455,18 @@ uranium//-------------| ultrafast
 uranium//-------------| uranium
   .createBullet("ArtilleryBulletType", '30x173', {
     update(b) {
-      // Artillery is sparse. Keep its original rich trail at LOD0 and only thin
-      // the spawned artillery-trail Effect under real visual pressure.
-      const originalTrailMult = this.trailMult;
-      const lod = uranium.vfxBudget.addVisible(b.x, b.y, 140, 0.18);
-
-      if (lod > 0) {
-        this.trailMult = originalTrailMult *
-          uranium.vfxBudget.trailDivisor[lod] *
-          uranium.vfxBudget.profileSpawnExtra(10, lod);
-      }
-
+      // Built-in Trail geometry is not an EffectState and therefore is not part
+      // of the spawn budget. Keep it rich; spawned trail Effects are proxy-gated.
       this.super$update(b);
-      this.trailMult = originalTrailMult;
     },
     despawned(b) {
-      uranium.vfxBudget.addVisible(b.x, b.y, 150, 8.0);
       this.super$despawned(b);
-      if (uranium.vfxBudget.allowVisible(
-        b.x, b.y, 150, 0.0,
-        b.id,
-        'residue',
-        30173,
-        10
-      )) {
-        uranium.getEffect('uranium-residue-artillery').at(
-          b.x, b.y, b.rotation(), this.hitColor
-        );
-      }
+      uranium.vfxBudget.spawnEffect(
+        uranium.getEffect('uranium-residue-artillery'),
+        b.x, b.y, b.rotation(), this.hitColor, null,
+        'residue', 8.0 / 10.0,
+        b.id, 30173, 10, 150
+      );
     }
   })
   .setAmmo('uranium_ART_round')
@@ -1550,6 +1529,7 @@ uranium//-------------| tritium
   .setBullet(480, 4, 80, 1, 320, 70)
   .setDrawBullet(0, "#ccff99", "#ccff00", 15, 28)
   .customSetting({
+    _quality: 5,
     fragBullets: 8,
     fragBullet: uranium.getBullet('lightining-big-frag'),
     pierce: true,
@@ -1580,6 +1560,7 @@ uranium//-------------| iritrium
   .setBullet(480, 6, 80, 1, 120, 70)
   .setDrawBullet(0, "#E9FE31", "#F9FEC1", 15, 28)
   .customSetting({
+    _quality: 5,
     fragBullets: 4,
     fragBullet: uranium
       .createBullet("BasicBulletType", '', {})

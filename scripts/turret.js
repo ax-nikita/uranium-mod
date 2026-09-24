@@ -50,7 +50,7 @@ const uraniumTurretManifest = [
 uranium//------Турель жук
   .createItemTurret("11_auto_turret", '9x18', {
     tier: 1,
-    expShoot: 4,
+    expShoot: 2.3,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 1,
     health: 260,
@@ -67,7 +67,7 @@ uranium//------Турель жук
 uranium//------Турель зверь
   .createItemTurret("12_auto_turret_zver", '9x18', {
     tier: 1,
-    expShoot: 2,
+    expShoot: 2.3,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 2,
     health: 600,
@@ -90,7 +90,7 @@ uranium//------Турель зверь
 uranium//------Санайперская турель гадюка
   .createItemTurret("13_snap_turret", '12x108', {
     tier: 1,
-    expShoot: 14,
+    expShoot: 12.6,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 1,
     health: 500,
@@ -111,7 +111,7 @@ uranium//------Санайперская турель гадюка
 uranium//------Турель мустанг
   .createItemTurret("21_auto_turret_mustang", '9x18', {
     tier: 2,
-    expShoot: 0.9,
+    expShoot: 1.1,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 2,
     health: 900,
@@ -133,7 +133,7 @@ uranium//------Турель мустанг
 uranium//------Противовоздушная рельса
   .createItemTurret("22_air_turret_rels", 'relsa', {
     tier: 2,
-    expShoot: 13,
+    expShoot: 7.7,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 1,
     health: 700,
@@ -158,7 +158,7 @@ uranium//------Противовоздушная рельса
 uranium//------Снайперская турель удав
   .createItemTurret("23_auto_turret_udav", '9x18', {
     tier: 2,
-    expShoot: 1,
+    expShoot: 1.15,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 3,
     health: 600,
@@ -180,7 +180,7 @@ uranium//------Снайперская турель удав
 uranium//------Крупнокалиберная турель крот
   .createItemTurret("24_hard_auto_turret", '12x108', {
     tier: 2,
-    expShoot: 5,
+    expShoot: 6.3,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 2,
     health: 1000,
@@ -207,7 +207,7 @@ uranium//------Крупнокалиберная турель крот
 uranium//------Турель циклон
   .createItemTurret("25_auto_turret_ceklon", '9x18', {
     tier: 2,
-    expShoot: 0.7,
+    expShoot: 0.9,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 3,
     health: 1200,
@@ -256,7 +256,7 @@ uranium//------Снайперская турель кобра
 uranium//------Турелька скарабей
   .createItemTurret("31_multi_turret_scarabey", '9x18', {
     tier: 3,
-    expShoot: 0.9,
+    expShoot: 1.14,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 3,
     health: 400,
@@ -271,7 +271,7 @@ uranium//------Турелька скарабей
 uranium//------Турель скат
   .createItemTurret("32_auto_turret_scat", '9x18', {
     tier: 3,
-    expShoot: 0.8,
+    expShoot: 0.88,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 4,
     health: 1100,
@@ -284,14 +284,14 @@ uranium//------Турель скат
     }
   })
   .setTurretTarget('all')
-  .setTurretShot(35, 4)
+  .setTurretShot(35, 3)
   .setTurretOther(170, 3, 12)
   .setBuildTurret({});
 
 uranium//------Турель анаконда
   .createItemTurret("33_snap_turret_anaconda", '12x108', {
     tier: 3,
-    expShoot: 6,
+    expShoot: 7.27,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 5,
     health: 1200,
@@ -315,7 +315,7 @@ uranium//------Турель анаконда
 uranium//------Турель Восход
   .createItemTurret("34_hard_auto_turret_voshod", '12x108', {
     tier: 3,
-    expShoot: 4,
+    expShoot: 2.27,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 4,
     health: 2100,
@@ -343,7 +343,7 @@ uranium//------Турель Восход
 uranium//------Турель звезда
   .createPowerTurret("35_laser_turret_zvezda", 'zvezda', {
     tier: 3,
-    expShoot: 3,
+    expShoot: 2.6,
     lvlMap: uranium.turretLvlMap,
     health: 1200,
     size: 2,
@@ -376,7 +376,7 @@ uranium//------Турель звезда
 uranium//------Турель даль
   .createLaserTurret("36_laser_turret_dalh", 'dalh', {
     tier: 3,
-    expShoot: 9,
+    expShoot: 2.6,
     lvlMap: uranium.turretLvlMap,
     health: 1000,
     size: 2,
@@ -409,7 +409,7 @@ uranium//------Турель даль
 uranium//------Турель клен
   .createItemTurret("37_ART_Clen", '30x173', {
     tier: 3,
-    expShoot: 5,
+    expShoot: 25,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 3,
     health: 1400,
@@ -435,7 +435,7 @@ uranium//------Турель клен
 uranium//------Турель спартанец
   .createLaserTurret("41_laser_turret_spartan", 'spartan', {
     tier: 4,
-    expShoot: 5,
+    expShoot: 0.65,
     lvlMap: uranium.turretLvlMap,
     _shield: 2,
     _extraShield: 50,
@@ -536,7 +536,7 @@ uranium//------Турель спартанец
 uranium//------Турель Томагавк
   .createItemTurret("42_tomahawk", 'relsa', {
     tier: 4,
-    expShoot: 100,
+    expShoot: 4.34,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 2,
     baseLoadRegion: {
@@ -616,7 +616,7 @@ uranium//------Турель Томагавк
 uranium//------Турель инквизитор
   .createItemTurret("43_inkvizitor", '9x18', {
     tier: 4,
-    expShoot: 0.5,
+    expShoot: 0.3,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 5,
     health: 1450,
@@ -642,7 +642,7 @@ uranium//------Турель инквизитор
 uranium//------Турель Император
   .createItemTurret("45_ART_imperator", '30x173', {
     tier: 4,
-    expShoot: 4,
+    expShoot: 20.8,
     lvlMap: uranium.turretLvlMap,
     ammoQuality: 4,
     maxAmmo: 6,

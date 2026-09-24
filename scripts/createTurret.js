@@ -217,6 +217,14 @@ uranium.t.playTurretQualityApplyFx = function (q, t) {
 uranium.t.serverQualityApplyFx = (() => {
   const TYPE = 'uranium-mod-turretQualityApplyFx';
 
+  // A reliable quality packet can reach the client while the target tile is
+  // still represented by ConstructBlock. The old handler simply discarded that
+  // packet, leaving the freshly finished turret on the neutral placeholder until
+  // some later full sync/snapshot happened. Keep the authoritative roll pending
+  // for a short time and apply it as soon as the final building exists.
+  let pending = {},
+    pendingCount = 0;
+
   function makePackage(q, t, tilePos, blockName) {
     return uranium.JSON.stringify({
       tP: tilePos,
@@ -224,6 +232,87 @@ uranium.t.serverQualityApplyFx = (() => {
       t: t,
       b: blockName
     });
+  }
+
+  function pendingKey(tilePos, blockName) {
+    return tilePos + ':' + (blockName == undefined ? '' : blockName);
+  }
+
+  // return: 1 = applied, 0 = target building not ready yet.
+  function tryApply(data) {
+    if (data == null) return 0;
+
+    const tilePos = uranium.netTilePos(data.tP);
+    if (tilePos == null) return 0;
+
+    const tile = Vars.world.tile(tilePos);
+    if (tile == null || tile.build == null) return 0;
+
+    const build = tile.build;
+    if (data.b != undefined) {
+      const currentName = build.block != null ? build.block.name : null;
+
+      // During construction build.block is buildN; ConstructBuild.current is the
+      // actual target block. Wait instead of dropping the packet.
+      if (currentName != data.b) {
+        const targetName =
+          build.current != undefined && build.current != null
+            ? build.current.name
+            : null;
+        if (targetName != data.b) return 0;
+        return 0;
+      }
+    }
+
+    if (build.setAuthoritativeTurretQuality == undefined) return 0;
+
+    // Apply q/t first so the first rendered frame of the finished turret already
+    // uses its real quality. refreshDerived=true updates deterministic client-side
+    // health/shield/render data immediately; the full server sync still follows.
+    build.setAuthoritativeTurretQuality(data.q, data.t, true);
+
+    if (build.playTurretQualityApplyFx != undefined) {
+      build.playTurretQualityApplyFx(data.q, data.t);
+    }
+    return 1;
+  }
+
+  function queue(data) {
+    const tilePos = uranium.netTilePos(data.tP);
+    if (tilePos == null) return;
+
+    const key = pendingKey(tilePos, data.b);
+    if (pending[key] == undefined) pendingCount++;
+
+    pending[key] = {
+      data: data,
+      time: Time.millis()
+    };
+  }
+
+  function updatePending() {
+    if (pendingCount <= 0 || !Vars.net.client()) return;
+
+    const keys = Object.keys(pending);
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i],
+        entry = pending[key];
+
+      if (entry == undefined) continue;
+
+      // 15 s is far longer than the expected constructFinish/network race while
+      // preventing a stale packet from surviving indefinitely across later builds.
+      if (Time.timeSinceMillis(entry.time) > 15000) {
+        delete pending[key];
+        pendingCount--;
+        continue;
+      }
+
+      if (tryApply(entry.data)) {
+        delete pending[key];
+        pendingCount--;
+      }
+    }
   }
 
   let inited = false;
@@ -238,25 +327,18 @@ uranium.t.serverQualityApplyFx = (() => {
           const data = uranium.JSON.parse(pack);
           if (data == null) return;
 
-          const tilePos = uranium.netTilePos(data.tP);
-          if (tilePos == null) return;
-
-          const tile = Vars.world.tile(tilePos);
-          if (tile == null || tile.build == undefined) return;
-
-          const build = tile.build;
-          // Reject a stale packet if the tile has already been rebuilt as a different block.
-          if (data.b != undefined && build.block != null && build.block.name != data.b) return;
-
-          // Apply the server roll before any quality-dependent FX/drawing.
-          if (build.setAuthoritativeTurretQuality != undefined) {
-            build.setAuthoritativeTurretQuality(data.q, data.t, true);
-          }
-          if (build.playTurretQualityApplyFx != undefined) {
-            build.playTurretQualityApplyFx(data.q, data.t);
+          if (!tryApply(data)) {
+            queue(data);
           }
         })
       );
+
+      // Usually the packet applies directly. This lightweight fallback only does
+      // work while one or more placement packets are waiting for ConstructBlock
+      // to become the final Uranium turret.
+      Events.run(Trigger.update, () => {
+        updatePending();
+      });
     }
   }
 
@@ -291,6 +373,14 @@ uranium.t.placed = function () {
   this.ensureAuthoritativeTurretQuality();
   this.applyTurretQualityTileCache();
 
+  const quality = this.getD().turretQuality;
+
+  // Send the tiny authoritative q/t packet immediately after the final roll/cache
+  // decision, before updateLvl() emits the larger turret state/health sync. This
+  // makes the real quality available to remote clients on the construction-finish
+  // frame instead of letting the neutral placeholder linger.
+  this.serverQualityApplyFx(quality.q, quality.t, this.tile.pos(), this.block.name);
+
   // Initialize derived stats immediately on real placement instead of waiting for
   // the first update tick. ConstructFinish writes current HP from block.health, so
   // preserve that fraction against the new quality/level maxHealth. Save loading
@@ -303,9 +393,7 @@ uranium.t.placed = function () {
     this.firstUpdate = true;
   }
 
-  const quality = this.getD().turretQuality;
   this.playTurretQualityApplyFx(quality.q, quality.t);
-  this.serverQualityApplyFx(quality.q, quality.t, this.tile.pos(), this.block.name);
 };
 
 uranium.t.updateData = function (data) {
@@ -1899,7 +1987,9 @@ uranium.t.getExpMultiplier = function () {
 
 uranium.t.acceptExp = function (exp) {
   if (!Vars.net.client()) {
-    exp = exp * this.getExpMultiplier() * this.getQD('expBoost');
+    // expBoost is already part of getExpMultiplier(); applying it again made
+    // quality XP bonuses quadratic instead of linear.
+    exp = exp * this.getExpMultiplier();
     if (exp < 0) {
       exp = 0;
     };
@@ -2106,7 +2196,18 @@ uranium.t.baseBullet = function (type, angle) {
       type.smokeEffect.at(muzzleX, muzzleY, this.rotation, type.hitColor);
     }
   } else {
-    uranium.getEffect('9x18-shot').at(this.x + tr.x, this.y + tr.y, this.rotation, type.frontColor);
+    const muzzleX = this.x + tr.x,
+      muzzleY = this.y + tr.y,
+      muzzleSeed = (this.tile != null ? this.tile.pos() : 0) * 4099 + this.totalShots;
+
+    uranium.vfxBudget.spawnEffect(
+      uranium.getEffect('9x18-shot'),
+      muzzleX, muzzleY, this.rotation, type.frontColor, null,
+      'muzzle', 0.16,
+      muzzleSeed, 918,
+      uranium.vfxBudget.getBulletProfileFactor('9x18'),
+      55
+    );
   }
 };
 
@@ -2620,8 +2721,6 @@ uranium.addObjMethod('setBuildPowerTurret', function (f) {
 
             let
               type = this.peekAmmo();
-
-            this.acceptExp(this.parent.expShoot * this.getQD('expBoost'));
 
             this.shoot(type);
             this.reloadCounter -= this.block.reload;

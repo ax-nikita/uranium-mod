@@ -56,9 +56,6 @@ function fxFadeAfter(e, start) {
 
 function createKineticMuzzle(name, lifetime, colorA, colorB, reach, spread, particles, smoke, lightRadius, profileFactor) {
   uranium.createEffect(name, lifetime, e => {
-    if (profileFactor && e.time < 1.1) {
-      uranium.vfxBudget.addVisible(e.x, e.y, Math.max(40, lightRadius * 1.4), 0.50 * profileFactor);
-    }
     const out = e.fout();
     const drawParticles = profileFactor
       ? uranium.vfxBudget.profileCount(particles, 2, profileFactor)
@@ -92,9 +89,6 @@ function createKineticMuzzle(name, lifetime, colorA, colorB, reach, spread, part
 
 function createEnergyMuzzle(name, lifetime, colorA, colorB, reach, particles, lightRadius, mode, profileFactor) {
   uranium.createEffect(name, lifetime, e => {
-    if (profileFactor && e.time < 1.1) {
-      uranium.vfxBudget.addVisible(e.x, e.y, Math.max(40, lightRadius * 1.4), 0.50 * profileFactor);
-    }
     const out = e.fout();
     const drawParticles = profileFactor ? uranium.vfxBudget.profileCount(particles, 3, profileFactor) : particles;
     const pulse = 0.5 + 0.5 * Math.sin((e.time + e.id % 13) / 3.2);
@@ -593,9 +587,14 @@ function createAltitHit(name, lifetime, scale, profileFactor, detailFraction) {
 // Blue thorium preserves the original idea: particles continue *forward* after
 // impact. They now have layered brightness, length variation and slow decay.
 function createBlueThoriumHit(name, lifetime, scale, profileFactor) {
-  uranium.createEffect(name, lifetime, e => {
+  // Pure-thorium impact particles are intentionally long and forward-biased,
+  // but the old density/lifetime was excessive at high fire rates.
+  const particleScale = 0.67;
+  const effectLifetime = lifetime * 0.67;
+
+  uranium.createEffect(name, effectLifetime, e => {
     const lod = profileFactor ? uranium.vfxBudget.registerEffect(e, 110, profileFactor, 0.12) : uranium.vfxBudget.getLod();
-    if (profileFactor && lod > 0) uranium.vfxBudget.profileLifetime(e, lifetime, profileFactor, 12);
+    if (profileFactor && lod > 0) uranium.vfxBudget.profileLifetime(e, effectLifetime, profileFactor, 12);
     const out = e.fout();
     const pulse = 0.5 + 0.5 * Math.sin((e.time + e.id % 17) / 5.0);
     Draw.z(Layer.effect);
@@ -603,7 +602,8 @@ function createBlueThoriumHit(name, lifetime, scale, profileFactor) {
     Draw.alpha((0.48 + 0.18 * pulse) * out);
     Fill.circle(e.x, e.y, 1.4 + 2.2 * scale * out);
 
-    Angles.randLenVectors(e.id, profileFactor ? uranium.vfxBudget.profileCount(Math.floor(8 + 10 * scale), 3, profileFactor) : Math.floor(8 + 10 * scale), 4 + 34 * scale * e.finpow(), e.rotation, 17 + 4 * scale, (x, y) => {
+    const primaryCount = Math.max(1, Math.floor((8 + 10 * scale) * particleScale));
+    Angles.randLenVectors(e.id, profileFactor ? uranium.vfxBudget.profileCount(primaryCount, 2, profileFactor) : primaryCount, 4 + 34 * scale * e.finpow(), e.rotation, 17 + 4 * scale, (x, y) => {
       const ang = Mathf.angle(x, y);
       const long = 1.2 + 6.0 * scale * out * (0.55 + 0.45 * fxNoise(e.id + x * 0.71 + y * 0.33));
       Draw.color(ammoFx.blueThoriumB, ammoFx.blueThoriumA, e.fin());
@@ -614,7 +614,8 @@ function createBlueThoriumHit(name, lifetime, scale, profileFactor) {
       Fill.circle(e.x + x * 0.82, e.y + y * 0.82, 0.25 + 0.65 * scale * out);
     });
 
-    Angles.randLenVectors(e.id + 501, profileFactor ? uranium.vfxBudget.profileCount(Math.floor(3 + 4 * scale), 2, profileFactor) : Math.floor(3 + 4 * scale), 3 + 18 * scale * e.finpow(), e.rotation, 26, (x, y) => {
+    const secondaryCount = Math.max(1, Math.floor((3 + 4 * scale) * particleScale));
+    Angles.randLenVectors(e.id + 501, profileFactor ? uranium.vfxBudget.profileCount(secondaryCount, 1, profileFactor) : secondaryCount, 3 + 18 * scale * e.finpow(), e.rotation, 26, (x, y) => {
       Draw.color(ammoFx.blueThoriumA);
       Draw.alpha(0.12 * out);
       Fill.circle(e.x + x, e.y + y, 0.5 + 0.8 * scale * out);

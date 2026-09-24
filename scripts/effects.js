@@ -475,9 +475,6 @@ const uraniumFxDark = uranium.getRuntimeColor("243628");
 
 function createUraniumShotEffect(name, lifetime, frontReach, sideSpread, particleCount, lightRadius, coreSize, profileFactor) {
   uranium.createEffect(name, lifetime, (e) => {
-    if (profileFactor && e.time < 1.1) {
-      uranium.vfxBudget.addVisible(e.x, e.y, Math.max(45, lightRadius * 1.45), 0.50 * profileFactor);
-    }
     const backRot = e.rotation + 180;
     const drawParticles = profileFactor ? uranium.vfxBudget.profileCount(particleCount, 3, profileFactor) : particleCount;
 

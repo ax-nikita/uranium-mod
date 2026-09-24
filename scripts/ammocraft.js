@@ -503,7 +503,7 @@ uranium
         [uranium.getI('phase-fabric', true), 1]
       ],
       output_items: [
-        [uranium.getI('ultrafast_round'), 5]
+        [uranium.getI('ultrafast_round'), 10]
       ],
       regions: [
         (t, d) => {
@@ -523,7 +523,7 @@ uranium
         [uranium.getI('uranium-235'), 2]
       ],
       output_items: [
-        [uranium.getI('uranium_round'), 5]
+        [uranium.getI('uranium_round'), 10]
       ],
       regions: [
         (t, d) => {
@@ -543,7 +543,7 @@ uranium
         [uranium.getI('iridium'), 1]
       ],
       output_items: [
-        [uranium.getI('iridium_round'), 10]
+        [uranium.getI('iridium_round'), 20]
       ],
       regions: [
         (t, d) => {
@@ -563,7 +563,7 @@ uranium
         [uranium.getI('tritium'), 1]
       ],
       output_items: [
-        [uranium.getI('tritium_round'), 20]
+        [uranium.getI('tritium_round'), 40]
       ],
       regions: [
         (t, d) => {
@@ -583,7 +583,7 @@ uranium
         [uranium.getI('iritrium'), 1]
       ],
       output_items: [
-        [uranium.getI('tritium_round'), 7]
+        [uranium.getI('iritrium_round'), 4]
       ],
       regions: [
         (t, d) => {
@@ -787,7 +787,7 @@ uranium
         [uranium.getI('phase-fabric', true), 1]
       ],
       output_items: [
-        [uranium.getI('ultrafast_large_round'), 2]
+        [uranium.getI('ultrafast_large_round'), 4]
       ],
       regions: [
         (t, d) => {
@@ -807,7 +807,7 @@ uranium
         [uranium.getI('uranium-235'), 2]
       ],
       output_items: [
-        [uranium.getI('uranium_large_round'), 3]
+        [uranium.getI('uranium_large_round'), 5]
       ],
       regions: [
         (t, d) => {
@@ -827,7 +827,7 @@ uranium
         [uranium.getI('iridium'), 1]
       ],
       output_items: [
-        [uranium.getI('iridium_large_round'), 5]
+        [uranium.getI('iridium_large_round'), 10]
       ],
       regions: [
         (t, d) => {
@@ -847,7 +847,7 @@ uranium
         [uranium.getI('tritium'), 1]
       ],
       output_items: [
-        [uranium.getI('tritium_large_round'), 10]
+        [uranium.getI('tritium_large_round'), 20]
       ],
       regions: [
         (t, d) => {
@@ -867,7 +867,7 @@ uranium
         [uranium.getI('iritrium'), 1]
       ],
       output_items: [
-        [uranium.getI('iritrium_large_round'), 5]
+        [uranium.getI('iritrium_large_round'), 3]
       ],
       regions: [
         (t, d) => {
@@ -1071,7 +1071,7 @@ uranium
         [uranium.getI('phase-fabric', true), 1]
       ],
       output_items: [
-        [uranium.getI('ultrafast_ART_round'), 2]
+        [uranium.getI('ultrafast_ART_round'), 3]
       ],
       regions: [
         (t, d) => {
@@ -1091,7 +1091,7 @@ uranium
         [uranium.getI('uranium-235'), 2]
       ],
       output_items: [
-        [uranium.getI('uranium_ART_round'), 1]
+        [uranium.getI('uranium_ART_round'), 2]
       ],
       regions: [
         (t, d) => {
@@ -1111,7 +1111,7 @@ uranium
         [uranium.getI('iridium'), 1]
       ],
       output_items: [
-        [uranium.getI('iridium_ART_round'), 3]
+        [uranium.getI('iridium_ART_round'), 5]
       ],
       regions: [
         (t, d) => {
@@ -1131,7 +1131,7 @@ uranium
         [uranium.getI('tritium'), 1]
       ],
       output_items: [
-        [uranium.getI('tritium_ART_round'), 4]
+        [uranium.getI('tritium_ART_round'), 8]
       ],
       regions: [
         (t, d) => {
@@ -1151,7 +1151,7 @@ uranium
         [uranium.getI('iritrium'), 1]
       ],
       output_items: [
-        [uranium.getI('iritrium_ART_round'), 2]
+        [uranium.getI('iritrium_ART_round'), 1]
       ],
       regions: [
         (t, d) => {
