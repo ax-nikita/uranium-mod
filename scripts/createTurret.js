@@ -812,6 +812,12 @@ uranium.t.calculateDynamicMaxShield = function (dynamicMaxHealth) {
 
 uranium.t.updateLvl = function () {
   if (!Vars.net.client()) {
+    const maxLevel = uranium.turretLvlMap.length - 1;
+    if (this.getD().lvl >= maxLevel) {
+      if (this.getD().lvl > maxLevel) this.getD().lvl = maxLevel;
+      if (this.getD().exp != 0) this.getD().exp = 0;
+      this.expTimer = 0;
+    }
     this.serverSynch(this.getD(), this.tile.pos());
   };
 
@@ -1417,6 +1423,14 @@ uranium.t.updateHealthRuntimeTick = function () {
 
 uranium.t.updateExpRuntimeTick = function () {
   if (Vars.net.client() || !this._rtExpUpdateActive) return;
+
+  if (this.getD().lvl >= uranium.turretLvlMap.length - 1) {
+    this._rtExpUpdateActive = false;
+    this._rtExpUpdateValue = 0;
+    this.expTimer = 0;
+    return;
+  }
+
   if (this.expTimer >= 20) {
     this.acceptExp(this._rtExpUpdateValue);
     this.expTimer = 0;
@@ -1531,8 +1545,12 @@ uranium.t.rebuildRuntimeCache = function () {
   this._rtHasStatus = !!this._statusBoostStronger;
   this._rtHasStatusEffect = !!this._statusBoostStronger && !!this._effectBoost && this._effectBoostChance > 0;
 
-  this._rtExpUpdateActive = !!this._statsBoostExpUpdate || !!q['expUpdate'];
-  this._rtExpUpdateValue = (q['expUpdate'] + this._statsBoostExpUpdate) / 3;
+  const canGainExp = this.getD().lvl < uranium.turretLvlMap.length - 1;
+  this._rtExpUpdateActive = canGainExp && (!!this._statsBoostExpUpdate || !!q['expUpdate']);
+  this._rtExpUpdateValue = this._rtExpUpdateActive
+    ? (q['expUpdate'] + this._statsBoostExpUpdate) / 3
+    : 0;
+  if (!canGainExp) this.expTimer = 0;
 
   this._rtQualityEffect = q['effect'];
   this._rtHasQualityEffect = !!this._rtQualityEffect;
@@ -1951,34 +1969,45 @@ uranium.t.expEffect = function () {
 };
 
 uranium.t.expCalc = function () {
-  if (!Vars.net.client()) {
-    if (this.data.lvl < uranium.turretLvlMap.length - 1) {
-      if (this.data.exp >= this.getPO().getTurretMap(this.data.lvl, 'nextLvlExp')) {
-        this.data.exp = 0;
-        this.data.lvl++;
-        this.serverSynchExp({
-          exp: parseInt(this.data.exp),
-          lvl: this.data.lvl,
-          lvlUp: 1
-        }, this.tile.pos());
-        this.SynchTimer = 0;
-        this.expEffect();
-      }
-    } else if (this.data.lvl >= uranium.turretLvlMap.length) {
-      this.data.lvl = uranium.turretLvlMap.length - 1;
-    };
-    if (this.SynchTimer == undefined || this.SynchTimer > 10) {
-      this.serverSynchExp({
-        exp: parseInt(this.data.exp),
-        lvl: this.data.lvl,
-        lvlUp: 0
-      }, this.tile.pos());
-      this.SynchTimer = 0;
-    } else {
-      this.SynchTimer++;
-    };
-  };
+  if (Vars.net.client()) return;
 
+  const maxLevel = uranium.turretLvlMap.length - 1;
+
+  // Max-level turrets have no XP state to advance. Old saves may contain
+  // accumulated XP from earlier versions; discard it once and do no XP sync work.
+  if (this.data.lvl >= maxLevel) {
+    if (this.data.lvl > maxLevel) this.data.lvl = maxLevel;
+    if (this.data.exp != 0) this.data.exp = 0;
+    this.expTimer = 0;
+    return;
+  }
+
+  if (this.data.exp >= this.getPO().getTurretMap(this.data.lvl, 'nextLvlExp')) {
+    this.data.exp = 0;
+    this.data.lvl++;
+    this.serverSynchExp({
+      exp: 0,
+      lvl: this.data.lvl,
+      lvlUp: 1
+    }, this.tile.pos());
+    this.SynchTimer = 0;
+    this.expEffect();
+
+    // updateLvl() rebuilt all derived state and sent the authoritative turret
+    // state. Do not continue into the periodic XP sync lane at max level.
+    if (this.data.lvl >= maxLevel) return;
+  }
+
+  if (this.SynchTimer == undefined || this.SynchTimer > 10) {
+    this.serverSynchExp({
+      exp: parseInt(this.data.exp),
+      lvl: this.data.lvl,
+      lvlUp: 0
+    }, this.tile.pos());
+    this.SynchTimer = 0;
+  } else {
+    this.SynchTimer++;
+  }
 }
 
 uranium.t.getExpMultiplier = function () {
@@ -1986,16 +2015,16 @@ uranium.t.getExpMultiplier = function () {
 };
 
 uranium.t.acceptExp = function (exp) {
-  if (!Vars.net.client()) {
-    // expBoost is already part of getExpMultiplier(); applying it again made
-    // quality XP bonuses quadratic instead of linear.
-    exp = exp * this.getExpMultiplier();
-    if (exp < 0) {
-      exp = 0;
-    };
-    this.data.exp += exp;
-    this.expCalc();
+  if (Vars.net.client() || this.data.lvl >= uranium.turretLvlMap.length - 1) return;
+
+  // expBoost is already part of getExpMultiplier(); applying it again made
+  // quality XP bonuses quadratic instead of linear.
+  exp = exp * this.getExpMultiplier();
+  if (exp < 0) {
+    exp = 0;
   };
+  this.data.exp += exp;
+  this.expCalc();
 };
 uranium.t._ammoQuality = 1;
 
@@ -2129,7 +2158,11 @@ uranium.t.baseShot = function (type) {
 uranium.t.updateOneShot = function () {
   if (!this.hasAmmo())
     return;
-  this.acceptExp(this.parent.expShoot * this.peekAmmo().getExpMultiplier());
+
+  if (this.getD().lvl < uranium.turretLvlMap.length - 1) {
+    this.acceptExp(this.parent.expShoot * this.peekAmmo().getExpMultiplier());
+  }
+
   if (this.getQD('shotHealth') != 0 && this.health < this.maxHealth) {
     let oldHealth = this.health;
     this.health += this.getQD('shotHealth');
