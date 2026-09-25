@@ -164,8 +164,11 @@ let uraniumBattery = uranium
     draw() {
       const regions = this.parent.regions,
         graph = this.power == null ? null : this.power.graph,
-        capacity = graph == null ? 0 : graph.getTotalBatteryCapacity(),
-        stored = graph == null ? 0 : graph.batteryStored,
+        // Mindustry's own power UI reads these cached PowerGraph values. They
+        // preserve the old network-wide charge display without scanning every
+        // battery from every Uranium battery draw call.
+        capacity = graph == null ? 0 : graph.getLastCapacity(),
+        stored = graph == null ? 0 : graph.getLastPowerStored(),
         charge = capacity > 0 ? Math.max(0, Math.min(1, stored / capacity)) : 0,
         pulse = 0.5 + 0.5 * Math.sin(Time.time / 17 + this.id * 0.19),
         // Sample-and-hold electrical flicker. Per-frame Math.random() was too fast

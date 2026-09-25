@@ -91,7 +91,7 @@ uranium.addCustomBuild('ciklon', function () {
         return 3;
       },
       write(writer) {
-        uranium.tileMap = {};
+        uranium.clearLegacyTileMap();
         writer.i(data.lvl);
         writer.i(data.exp);
         writer.i(data.sheald);
@@ -219,7 +219,7 @@ uranium.addCustomBuild('inkvizitor', function () {
         return 3;
       },
       write(writer) {
-        uranium.tileMap = {};
+        uranium.clearLegacyTileMap();
         writer.i(data.lvl);
         writer.i(data.exp);
         writer.i(data.sheald);

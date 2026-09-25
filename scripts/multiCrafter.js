@@ -283,11 +283,61 @@ function addMultiCrafterDisplaySection(table, build, titleKey, entries, currentR
   table.row();
 }
 
+// Runtime-only recipe indexes. MultiCrafter recipes are static after content load,
+// so rebuild the same lookup work once instead of walking every recipe from
+// acceptItem()/handleItem() on every logistics probe.
+function buildMultiCrafterRuntimeCache(craftMap) {
+  let recipeRequirements = [],
+    recipesByItem = [],
+    outputDumpPlan = [];
+
+  for (let r = 0; r < craftMap.length; r++) {
+    let consumes = craftMap[r].consumes_items,
+      requirements = [],
+      seenInputs = [];
+
+    recipeRequirements[r] = requirements;
+
+    for (let i = 0; i < consumes.length; i++) {
+      let item = consumes[i][0],
+        id = item.id;
+
+      // getRecipeItemRequirement() historically returned the first occurrence.
+      // Keep that exact behavior even if a future recipe accidentally repeats an item.
+      if (requirements[id] == undefined) requirements[id] = consumes[i][1];
+
+      if (!seenInputs[id]) {
+        seenInputs[id] = true;
+        if (recipesByItem[id] == undefined) recipesByItem[id] = [];
+        recipesByItem[id].push(r);
+      }
+    }
+
+    // Preserve the exact old dump order and multiplicity. Some existing recipe
+    // tables contain the same output item more than once across recipes; merging
+    // those entries would silently reduce that item's ejection throughput.
+    let outputs = craftMap[r].output_items;
+    for (let i = 0; i < outputs.length; i++) {
+      outputDumpPlan.push(outputs[i][0]);
+    }
+  }
+
+  return {
+    recipeRequirements: recipeRequirements,
+    recipesByItem: recipesByItem,
+    outputDumpPlan: outputDumpPlan
+  };
+}
+
 uranium.createMultiCrafter = function (craft_map, name, entity_f) {
   // Keep the grouped recipe metadata in a Rhino closure. Do not store/read it
   // through Building.block: JavaAdapter does not reliably expose arbitrary JS
   // properties through the generated Java Block reference.
-  const inputGroups = getMultiCrafterInputGroups(craft_map);
+  const inputGroups = getMultiCrafterInputGroups(craft_map),
+    runtimeCache = buildMultiCrafterRuntimeCache(craft_map),
+    recipeRequirements = runtimeCache.recipeRequirements,
+    recipesByItem = runtimeCache.recipesByItem,
+    outputDumpPlan = runtimeCache.outputDumpPlan;
 
   entity_f.setStats = function () {
     this.super$setStats();
@@ -579,13 +629,11 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
           return this.getNeeded(item);
         },
         getRecipeItemRequirement(recipeNum, item) {
-          let consumes = this.getCraftMap()[recipeNum].consumes_items;
-          for (let i = 0; i < consumes.length; i++) {
-            if (consumes[i][0] == item) {
-              return consumes[i][1];
-            }
-          }
-          return 0;
+          let requirements = recipeRequirements[recipeNum];
+          if (requirements == undefined || item == null) return 0;
+
+          let value = requirements[item.id];
+          return value == undefined ? 0 : value;
         },
         hasRecipeInputs(recipeNum) {
           let consumes = this.getCraftMap()[recipeNum].consumes_items;
@@ -610,14 +658,18 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
             return false;
           }
 
-          // If idle, another recipe may accept this item. This is only a pure
-          // availability check; the actual recipe switch happens in handleItem().
-          for (let i = 0; i < this.getCraftMap().length; i++) {
-            if (i == d.craft_num) continue;
-            requirement = this.getRecipeItemRequirement(i, item);
-            if (requirement > 0 && this.items.get(item) < requirement * 2) {
-              return true;
-            }
+          // If idle, only inspect recipes that can actually consume this item.
+          // Recipe order is unchanged, so selection/routing behavior is identical.
+          let recipes = recipesByItem[item.id];
+          if (recipes == undefined) return false;
+
+          const stored = this.items.get(item);
+          for (let i = 0; i < recipes.length; i++) {
+            let recipeNum = recipes[i];
+            if (recipeNum == d.craft_num) continue;
+
+            requirement = this.getRecipeItemRequirement(recipeNum, item);
+            if (requirement > 0 && stored < requirement * 2) return true;
           }
           return false;
         },
@@ -627,10 +679,14 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
           // Prefer the current recipe whenever it can use the delivered item.
           if (this.getRecipeItemRequirement(d.craft_num, item) > 0) return;
 
-          for (let i = 0; i < this.getCraftMap().length; i++) {
-            if (i == d.craft_num) continue;
-            if (this.getRecipeItemRequirement(i, item) > 0) {
-              d.craft_num = i;
+          let recipes = recipesByItem[item.id];
+          if (recipes == undefined) return;
+
+          for (let i = 0; i < recipes.length; i++) {
+            let recipeNum = recipes[i];
+            if (recipeNum == d.craft_num) continue;
+            if (this.getRecipeItemRequirement(recipeNum, item) > 0) {
+              d.craft_num = recipeNum;
               return;
             }
           }
@@ -654,6 +710,7 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
               quontity = craft_info.consumes_items[i][1];
             if (this.items.get(c_item) < quontity) {
               consume_item = false;
+              break;
             }
           }
           if (consume_item) {
@@ -691,12 +748,12 @@ uranium.createMultiCrafter = function (craft_map, name, entity_f) {
               }
             }
           }
-          for (let i = 0; i < this.getCraftMap().length; i++) {
-            let
-              outputsItems = this.getCraftMap()[i].output_items;
-            for (let j = 0; j < outputsItems.length; j++) {
-              this.dump(this.getCraftMap()[i].output_items[j][0]);
-            }
+          // Keep the historical dump order/multiplicity, but never enter
+          // Building.dump() for an output item that is not in this inventory.
+          // dump(Item) scans neighboring buildings, so this is the expensive part.
+          for (let i = 0; i < outputDumpPlan.length; i++) {
+            let outputItem = outputDumpPlan[i];
+            if (this.items.get(outputItem) > 0) this.dump(outputItem);
           }
           return true;
         },

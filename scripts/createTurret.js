@@ -3,6 +3,19 @@ const
 
 uranium.t = {};
 
+// Reuse the Java functional adapters used by BlockIndexer.eachBlock(). Creating
+// boolf()/cons() on every aura scan adds Rhino -> Java wrapper churn in late game.
+// eachBlock() is synchronous; saving/restoring the source also makes nested scans safe.
+let uraniumAuraScanSource = null;
+const uraniumAuraTurretPredicate = boolf(build => build != null && build.uraniumTurret);
+const uraniumAuraTurretConsumer = cons(other => {
+  const source = uraniumAuraScanSource;
+  if (source == null || other == null) return;
+
+  if (other.verefiStatusBoostStronger(source._rtAuraStrong, source._rtAuraType, source._rtAuraName)) {
+    other.setStatusBoost(source._rtAuraQ, source._rtAuraT);
+  }
+});
 
 
 
@@ -1044,10 +1057,11 @@ uranium.t.damage = function (team, d) {
   // the same hit independently on every machine.
   if (Vars.net.client()) return;
 
-  if (d < this.getQD('armor')) {
+  const armor = this._rtCacheReady ? this._rtArmor : this.getQD('armor');
+  if (d < armor) {
     return;
   } else {
-    d -= this.getQD('armor');
+    d -= armor;
   };
 
   let oldHealth = this.health,
@@ -1374,6 +1388,37 @@ uranium.t._rtQualityEffectRandomPosition = false;
 uranium.t._rtQualityEffectRadius = 0;
 uranium.t._rtReloadMulti = 1;
 uranium.t._rtMaxFastShots = 0;
+uranium.t._rtAuraQ = 0;
+uranium.t._rtAuraT = 0;
+uranium.t._rtTurretType = '';
+uranium.t._rtIsItemTurret = false;
+uranium.t._rtIsPowerTurret = false;
+uranium.t._rtIsLaserTurret = false;
+uranium.t._rtArt = false;
+uranium.t._rtAlternate = false;
+uranium.t._rtShootShots = 1;
+uranium.t._rtShotDelay = 0;
+uranium.t._rtLuck = 0;
+uranium.t._rtLuckChance = 0;
+uranium.t._rtInaccuracy = 0;
+uranium.t._rtRotationSpeed = 0;
+uranium.t._rtTurretColor = undefined;
+uranium.t._rtExpMultiplier = 1;
+uranium.t._rtArmor = 0;
+uranium.t._rtShotHealth = 0;
+uranium.t._rtShotDamage = 0;
+uranium.t._rtShotDamageFactor = 0;
+uranium.t._rtExtraBullet = undefined;
+uranium.t._rtExtraBullets = 1;
+uranium.t._rtExtraBulletChance = 0;
+uranium.t._rtLaserType = undefined;
+uranium.t._rtBaseInaccuracy = 0;
+uranium.t._rtXrand = 0;
+uranium.t._rtSpread = 0;
+uranium.t._rtBaseRot = 0;
+uranium.t._rtShootSoundVolume = 1;
+uranium.t._rtShootSound = Sounds.none;
+uranium.t._rtCanGainExp = false;
 
 
 // Adaptive Uranium runtime scheduler. These are runtime-only fields copied into
@@ -1403,8 +1448,26 @@ uranium.t.getAdaptiveBaseInterval = function () {
   return 300;
 };
 
+uranium.t.healthNeedsRuntimeTick = function () {
+  if (this.healthUpdate == 0) return false;
+
+  // Negative regeneration is damage-over-time and must always remain active.
+  // Positive regeneration has no gameplay work while HP is exactly full.
+  return this.healthUpdate < 0 || this.health != this.maxHealth;
+};
+
+uranium.t.advanceIdleHealthRuntimeTimer = function () {
+  if (Vars.net.client() || this.healthUpdate <= 0 || this.health != this.maxHealth) return;
+
+  // The old full-HP path still advanced this 0..20 counter every update and
+  // performed a no-op heal on 20. Preserve that phase with only one cheap branch,
+  // so taking damage does not shift the timing of the next regeneration pulse.
+  if (this.healthUpdateTimer >= 20) this.healthUpdateTimer = 0;
+  else this.healthUpdateTimer++;
+};
+
 uranium.t.updateHealthRuntimeTick = function () {
-  if (Vars.net.client() || this.healthUpdate == 0) return;
+  if (Vars.net.client() || !this.healthNeedsRuntimeTick()) return;
 
   if (this.healthUpdateTimer >= 20) {
     const oldHealth = this.health;
@@ -1442,7 +1505,7 @@ uranium.t.updateExpRuntimeTick = function () {
 uranium.t.hasRuntimeFastWork = function () {
   if (Vars.net.client() || !this._rtCacheReady) return false;
 
-  if (this.healthUpdate != 0 || this._rtExpUpdateActive || this._rtHasAura || this._rtHasStatus) {
+  if (this.healthNeedsRuntimeTick() || this._rtExpUpdateActive || this._rtHasAura || this._rtHasStatus) {
     return true;
   }
 
@@ -1456,12 +1519,12 @@ uranium.t.hasRuntimeFastWork = function () {
   return false;
 };
 
-uranium.t.runtimeFastTick = function () {
-  if (!this.hasRuntimeFastWork()) return false;
+uranium.t.runtimeFastTick = function (knownActive) {
+  if (knownActive !== true && !this.hasRuntimeFastWork()) return false;
 
   // These operations are gameplay-order-sensitive, so whenever any of them is
   // active they still run at the original logical 60 Hz.
-  if (this.healthUpdate != 0) this.updateHealthRuntimeTick();
+  if (this.healthNeedsRuntimeTick()) this.updateHealthRuntimeTick();
   if (this._rtExpUpdateActive) this.updateExpRuntimeTick();
 
   if (this._rtHasShield && this.getD().sheald < this._maxSheald) {
@@ -1493,7 +1556,9 @@ uranium.t.runAdaptiveBaseUpdate = function () {
     // calls updateLvl(), so clear only that expected wake before the fast tick.
     this.ensureRuntimeInitialized();
     this._rtSchedWakePending = false;
-    if (this.hasRuntimeFastWork()) this.runtimeFastTick();
+    this.advanceIdleHealthRuntimeTimer();
+    const hasFastWork = this.hasRuntimeFastWork();
+    if (hasFastWork) this.runtimeFastTick(true);
     this.baseMaintenanceUpdate(logicalTicks);
 
     const interval = this.getAdaptiveBaseInterval();
@@ -1503,7 +1568,10 @@ uranium.t.runAdaptiveBaseUpdate = function () {
   }
 
   // Exact gameplay lane: skip it entirely when the turret has no runtime work.
-  if (this.hasRuntimeFastWork()) this.runtimeFastTick();
+  // Full-HP positive regen keeps only its tiny timer phase update above this lane.
+  this.advanceIdleHealthRuntimeTimer();
+  const hasFastWork = this.hasRuntimeFastWork();
+  if (hasFastWork) this.runtimeFastTick(true);
 
   if (this._rtSchedWakePending || this._rtSchedCountdown <= 0) {
     const logicalTicks = Math.max(1, this._rtSchedPendingTicks);
@@ -1530,26 +1598,37 @@ uranium.t.rebuildRuntimeCache = function () {
     return;
   }
 
-  this._rtHasShield = this.parent._shield > 0 && q['shield'] > 0;
+  const data = this.getD(),
+    parent = this.parent,
+    wrapper = this.getPO(),
+    level = data.lvl,
+    turretType = wrapper.type,
+    shoot = parent.shoot;
+
+  this._rtHasShield = parent._shield > 0 && q['shield'] > 0;
   this._rtShieldRegenDelayTicks = 120 * q['shieldRegenDelay'] * this._shieldBoostDelay;
-  this._rtShieldRegenAmount = this.parent.tier * q['shieldRegen'] * this.parent._regenShield;
+  this._rtShieldRegenAmount = parent.tier * q['shieldRegen'] * parent._regenShield;
 
   this._rtHasAura = !!q['statsBoost'];
-  this._rtAuraRange = q['statsBoostRange'] + this.parent.size * 8;
+  this._rtAuraRange = q['statsBoostRange'] + parent.size * 8;
   this._rtAuraStrong = q['statsBoostStrong'];
   this._rtAuraType = q['statsBoostType'];
   this._rtAuraName = q['name'];
+  this._rtAuraQ = data.turretQuality.q;
+  this._rtAuraT = data.turretQuality.t;
   this._rtResistType = q['statsBoostResistType'];
   this._rtResistStrong = q['statsBoostResistStrong'];
 
   this._rtHasStatus = !!this._statusBoostStronger;
   this._rtHasStatusEffect = !!this._statusBoostStronger && !!this._effectBoost && this._effectBoostChance > 0;
 
-  const canGainExp = this.getD().lvl < uranium.turretLvlMap.length - 1;
+  const canGainExp = level < uranium.turretLvlMap.length - 1;
+  this._rtCanGainExp = canGainExp;
   this._rtExpUpdateActive = canGainExp && (!!this._statsBoostExpUpdate || !!q['expUpdate']);
   this._rtExpUpdateValue = this._rtExpUpdateActive
     ? (q['expUpdate'] + this._statsBoostExpUpdate) / 3
     : 0;
+  this._rtExpMultiplier = q['expBoost'] * this._statsBoostExp;
   if (!canGainExp) this.expTimer = 0;
 
   this._rtQualityEffect = q['effect'];
@@ -1557,10 +1636,44 @@ uranium.t.rebuildRuntimeCache = function () {
   this._rtQualityEffectDelay = q['effectDelayTime'];
   this._rtQualityEffectChance = q['effectChance'];
   this._rtQualityEffectRandomPosition = q['effectRandomPosition'];
-  this._rtQualityEffectRadius = q['statsBoostRange'] + this.parent.size * 8;
+  this._rtQualityEffectRadius = q['statsBoostRange'] + parent.size * 8;
 
-  this._rtReloadMulti = this.getPO().getTurretMap(this.getD().lvl, 'reloadMultiplier') * q['reloadMultiplier'] * this._reloadMultiplierBoost;
-  this._rtMaxFastShots = Math.round((this.getP().fastShots + q['fastShots']) * q['fastShotsFactor']);
+  this._rtTurretType = turretType;
+  this._rtIsItemTurret = turretType == 'ItemTurret';
+  this._rtIsPowerTurret = turretType == 'PowerTurret';
+  this._rtIsLaserTurret = turretType == 'LaserTurret';
+  this._rtArt = !!parent.art;
+  this._rtAlternate = !!parent.alternate;
+  this._rtShootShots = shoot != null && shoot.shots != undefined ? shoot.shots : 1;
+  this._rtShotDelay = shoot != null && shoot.shotDelay != undefined ? shoot.shotDelay : 0;
+
+  this._rtLuck = wrapper.getTurretMap(level, 'luck') + parent.getLuck() + q['luck'];
+  if (this._rtLuck < 0) this._rtLuck = 0;
+  this._rtLuckChance = this._rtLuck / 100;
+
+  this._rtInaccuracy = (parent.inaccuracy + q['inaccuracy']) * q['inaccuracyFactor'];
+  if (this._rtInaccuracy < 0) this._rtInaccuracy = 0;
+  this._rtBaseInaccuracy = parent.inaccuracy;
+  this._rtRotationSpeed = (parent.rotateSpeed + q['rotateSpeed']) * q['rotateSpeedFactor'];
+  this._rtTurretColor = q['turretColor'];
+  this._rtArmor = q['armor'];
+  this._rtShotHealth = q['shotHealth'];
+  this._rtShotDamage = q['shotDamage'];
+  this._rtShotDamageFactor = q['shotDamageFactor'];
+  this._rtExtraBullet = q['extraBulet'];
+  this._rtExtraBullets = q['extraBulets'];
+  this._rtExtraBulletChance = q['extraBuletChance'];
+  this._rtLaserType = q['laserType'];
+
+  this._rtXrand = parent.xRand;
+  this._rtSpread = parent.spread;
+  this._rtBaseRot = (parent.size - 0.5) * Vars.tilesize - (parent.size - 1) * (Vars.tilesize - 1) / 2;
+  this._rtShootSoundVolume = parent._shootSoundVolume == undefined ? 1 : parent._shootSoundVolume;
+  this._rtShootSound = parent.shootSound;
+
+  this._rtReloadMulti = wrapper.getTurretMap(level, 'reloadMultiplier') * q['reloadMultiplier'] * this._reloadMultiplierBoost;
+  const baseFastShots = parent.fastShots == undefined ? 0 : parent.fastShots;
+  this._rtMaxFastShots = Math.round((baseFastShots + q['fastShots']) * q['fastShotsFactor']);
   this._rtCacheReady = true;
 
 };
@@ -1597,14 +1710,13 @@ uranium.t.updateAuraStatus = function (logicalTicks) {
   logicalTicks = Math.max(1, Math.floor(logicalTicks == undefined ? 1 : logicalTicks));
 
   if (this._rtHasAura && (this._statusBoostNextScan == undefined || Time.time >= this._statusBoostNextScan)) {
-    const thisT = this;
-    let targets = 0;
-    Vars.indexer.eachBlock(this, this._rtAuraRange, boolf(t => t.uraniumTurret), cons(other => {
-      targets++;
-      if (other.verefiStatusBoostStronger(thisT._rtAuraStrong, thisT._rtAuraType, thisT._rtAuraName)) {
-        other.setStatusBoost(thisT.getD().turretQuality.q, thisT.getD().turretQuality.t);
-      };
-    }));
+    const previousSource = uraniumAuraScanSource;
+    uraniumAuraScanSource = this;
+    try {
+      Vars.indexer.eachBlock(this, this._rtAuraRange, uraniumAuraTurretPredicate, uraniumAuraTurretConsumer);
+    } finally {
+      uraniumAuraScanSource = previousSource;
+    }
 
     if (this._statusBoostScanPhased) {
       this._statusBoostNextScan += 31;
@@ -1906,6 +2018,12 @@ uranium.t.setAmmoQualityBoost = function (v) {
 }
 
 uranium.tileMap = {};
+uranium._legacyTileMapUsed = false;
+uranium.clearLegacyTileMap = function () {
+  if (!this._legacyTileMapUsed) return;
+  this.tileMap = {};
+  this._legacyTileMapUsed = false;
+};
 
 uranium.t.verifiTile = function () {
   let
@@ -1952,6 +2070,7 @@ uranium.t.verifiTile = function () {
     }
   }
   uranium.tileMap[tilePos] = tile;
+  uranium._legacyTileMapUsed = true;
   if (tile.getTurretBuildingTime() > 0) {
     let
       data = this.getD()
@@ -2011,6 +2130,7 @@ uranium.t.expCalc = function () {
 }
 
 uranium.t.getExpMultiplier = function () {
+  if (this._rtCacheReady) return this._rtExpMultiplier;
   return this.getQD('expBoost') * this._statsBoostExp;
 };
 
@@ -2033,31 +2153,29 @@ uranium.t.getAmmoQuality = function () {
 }
 
 uranium.t.verifyAmmoQuality = function () {
-  let
-    type = this.peekAmmo(),
+  let type = this.peekAmmo(),
     ammoQuality = this.getAmmoQuality(),
+    quality = type.getQuality(),
+    alternate = this._rtCacheReady ? this._rtAlternate : this.parent.alternate,
+    shots = this._rtCacheReady ? this._rtShootShots : this.parent.shoot.shots,
     burstFactor = 1;
-  if (type.getQuality() > ammoQuality) {
-    if (!this.parent.alternate) {
-      burstFactor = this.parent.shoot.shots;
-    };
-    let
-      quality = type.getQuality() - ammoQuality;
-    this.damage(this.parent.reload * quality * this.parent.size / burstFactor);
+
+  if (quality > ammoQuality) {
+    if (!alternate) burstFactor = shots;
+    this.damage(this.parent.reload * (quality - ammoQuality) * this.parent.size / burstFactor);
   }
 }
 
 uranium.t.getLuck = function () {
-  let
-    Luck = this.getPO().getTurretMap(this.getD().lvl, 'luck') + this.parent.getLuck() + this.getQD('luck');
-  if (Luck < 0) {
-    Luck = 0;
-  }
-  return Luck;
+  if (this._rtCacheReady) return this._rtLuck;
+
+  let luck = this.getPO().getTurretMap(this.getD().lvl, 'luck') + this.parent.getLuck() + this.getQD('luck');
+  return luck < 0 ? 0 : luck;
 }
 
 uranium.t.checkLuck = function () {
-  return this.getLuck() / 100 > Math.random();
+  const chance = this._rtCacheReady ? this._rtLuckChance : this.getLuck() / 100;
+  return chance > Math.random();
 }
 
 uranium.t.hasShield = function () {
@@ -2076,7 +2194,9 @@ uranium.t.baseShoting = function () {
   let
     type;
 
-  if (this.getPO().type == 'ItemTurret') {
+  const turretType = this._rtCacheReady ? this._rtTurretType : this.getPO().type;
+
+  if (turretType == 'ItemTurret') {
     this.verifyAmmoQuality();
   }
 
@@ -2086,9 +2206,9 @@ uranium.t.baseShoting = function () {
     type = this.useAmmo();
   };
 
-  if (this.getPO().type == 'PowerTurret') {
+  if (turretType == 'PowerTurret') {
     let
-      QDT = type.getExtraTypes(this.getQD('laserType'));
+      QDT = type.getExtraTypes(this._rtCacheReady ? this._rtLaserType : this.getQD('laserType'));
     if (QDT != undefined) {
       type = QDT;
     };
@@ -2128,28 +2248,41 @@ uranium.t.baseBullet = function (type, angle) {
 }
 
 uranium.t.getInaccuracy = function () {
-  let
-    inaccuracy = (this.block.inaccuracy + this.getQD('inaccuracy')) * this.getQD('inaccuracyFactor');
-  if (inaccuracy < 0) {
-    inaccuracy = 0;
-  };
-  return inaccuracy;
+  if (this._rtCacheReady) return this._rtInaccuracy;
+
+  let inaccuracy = (this.block.inaccuracy + this.getQD('inaccuracy')) * this.getQD('inaccuracyFactor');
+  return inaccuracy < 0 ? 0 : inaccuracy;
 }
 
 uranium.t.baseShot = function (type) {
   if (!this.hasAmmo())
     return;
 
-  if (this.getPO().type == 'LaserTurret') {
+  const cacheReady = this._rtCacheReady,
+    turretType = cacheReady ? this._rtTurretType : this.getPO().type,
+    art = cacheReady ? this._rtArt : this.getP().art,
+    alternate = cacheReady ? this._rtAlternate : this.block.alternate,
+    shots = cacheReady ? this._rtShootShots : this.block.shoot.shots,
+    shotDelay = cacheReady ? this._rtShotDelay : this.block.shoot.shotDelay;
+
+  if (turretType == 'LaserTurret') {
     this.super$shoot(type);
     this.updateOneShot();
-  } else if (this.getP().art) {
+  } else if (art) {
     this.super$shoot(type);
     this.updateOneShot();
-  } else if (!this.block.alternate) {
-    for (var i = 0; i < this.block.shoot.shots; i++) {
-      Time.run(this.block.shoot.shotDelay * i, () => { this.baseShoting() });
-    };
+  } else if (!alternate) {
+    if (shotDelay <= 0) {
+      // Keep the legacy deferred timing (Time.run(0)), but pool only one
+      // DelayRun/Runnable for an instantaneous burst instead of one per projectile.
+      Time.run(0, () => {
+        for (let i = 0; i < shots; i++) this.baseShoting();
+      });
+    } else {
+      for (let i = 0; i < shots; i++) {
+        Time.run(shotDelay * i, () => { this.baseShoting() });
+      }
+    }
   } else {
     this.baseShoting();
   };
@@ -2159,13 +2292,23 @@ uranium.t.updateOneShot = function () {
   if (!this.hasAmmo())
     return;
 
-  if (this.getD().lvl < uranium.turretLvlMap.length - 1) {
+  const cacheReady = this._rtCacheReady,
+    canGainExp = cacheReady ? this._rtCanGainExp : this.getD().lvl < uranium.turretLvlMap.length - 1,
+    shotHealth = cacheReady ? this._rtShotHealth : this.getQD('shotHealth'),
+    shotDamage = cacheReady ? this._rtShotDamage : this.getQD('shotDamage'),
+    shotDamageFactor = cacheReady ? this._rtShotDamageFactor : this.getQD('shotDamageFactor'),
+    extraBullet = cacheReady ? this._rtExtraBullet : this.getQD('extraBulet'),
+    extraBulletChance = cacheReady ? this._rtExtraBulletChance : this.getQD('extraBuletChance'),
+    extraBullets = cacheReady ? this._rtExtraBullets : this.getQD('extraBulets'),
+    baseInaccuracy = cacheReady ? this._rtBaseInaccuracy : this.getP().inaccuracy;
+
+  if (canGainExp) {
     this.acceptExp(this.parent.expShoot * this.peekAmmo().getExpMultiplier());
   }
 
-  if (this.getQD('shotHealth') != 0 && this.health < this.maxHealth) {
+  if (shotHealth != 0 && this.health < this.maxHealth) {
     let oldHealth = this.health;
-    this.health += this.getQD('shotHealth');
+    this.health += shotHealth;
     if (this.health > this.maxHealth) {
       this.health = this.maxHealth;
     }
@@ -2173,16 +2316,16 @@ uranium.t.updateOneShot = function () {
       this.healthChanged();
     }
   }
-  if (this.getQD('shotDamage') > 0 || this.getQD('shotDamageFactor') > 0) {
-    this.damage((this.getQD('shotDamage') + this.maxHealth * this.getQD('shotDamageFactor')));
+  if (shotDamage > 0 || shotDamageFactor > 0) {
+    this.damage(shotDamage + this.maxHealth * shotDamageFactor);
   }
-  if (this.getQD('extraBulet') && (this.getQD('extraBuletChance') > Math.random() || this.checkLuck())) {
-    for (let i = 0; i < this.getQD('extraBulets'); i++) {
-      this.getQD('extraBulet').create(
+  if (extraBullet && (extraBulletChance > Math.random() || this.checkLuck())) {
+    for (let i = 0; i < extraBullets; i++) {
+      extraBullet.create(
         this, this.team,
         this.x,
         this.y,
-        this.rotation + Mathf.range(this.getP().inaccuracy + i)
+        this.rotation + Mathf.range(baseInaccuracy + i)
       );
     }
   }
@@ -2190,38 +2333,54 @@ uranium.t.updateOneShot = function () {
 };
 
 uranium.t.baseBullet = function (type, angle) {
-  let
-    tr = new Vec2(),
-    xR = this.block.xRand * Math.random() - this.block.xRand / 2,
-    baseRot = (this.block.size - 0.5) * (Vars.tilesize) - (this.block.size - 1) * (Vars.tilesize - 1) / 2;
+  const cacheReady = this._rtCacheReady,
+    xRand = cacheReady ? this._rtXrand : this.block.xRand,
+    baseRot = cacheReady ? this._rtBaseRot :
+      (this.block.size - 0.5) * Vars.tilesize - (this.block.size - 1) * (Vars.tilesize - 1) / 2,
+    alternate = cacheReady ? this._rtAlternate : this.block.alternate,
+    shots = cacheReady ? this._rtShootShots : this.block.shoot.shots,
+    spread = cacheReady ? this._rtSpread : this.block.spread,
+    isPowerTurret = cacheReady ? this._rtIsPowerTurret : this.getPO().type == 'PowerTurret';
 
-  if (this.block.alternate) {
-    if (this.shot_alternate == undefined || this.shot_alternate >= this.block.shoot.shots - 1) {
+  let xR = xRand * Math.random() - xRand / 2;
+
+  if (alternate) {
+    if (this.shot_alternate == undefined || this.shot_alternate >= shots - 1) {
       this.shot_alternate = 0;
     } else {
       this.shot_alternate++;
     }
-    xR += this.block.spread / this.block.shoot.shots * this.shot_alternate * 2 - this.block.spread / 2;
+    xR += spread / shots * this.shot_alternate * 2 - spread / 2;
   };
 
-  tr.trns(angle, baseRot, xR);
-  let shootSoundVolume = this.getP()._shootSoundVolume == undefined ? 1 : this.getP()._shootSoundVolume,
-    shotSound = this.getP().shootSound;
+  // Vec2.trns(angle, x, y) is exactly a rotation of (x,y). Angles' 3-argument
+  // helpers use Arc's shared scratch vector, eliminating one Java Vec2 allocation
+  // for every projectile without changing coordinates.
+  const bulletDx = Angles.trnsx(angle, baseRot, xR),
+    bulletDy = Angles.trnsy(angle, baseRot, xR);
+
+  let shootSoundVolume = cacheReady ? this._rtShootSoundVolume :
+      (this.getP()._shootSoundVolume == undefined ? 1 : this.getP()._shootSoundVolume),
+    shotSound = cacheReady ? this._rtShootSound : this.getP().shootSound;
 
   // PowerTurret projectiles now get the same audio/VFX routing as vanilla
   // turrets: a bullet-specific shootSound/shootEffect may override the block.
   // Item-turret behavior stays untouched.
-  if (this.getPO().type == 'PowerTurret' && type.shootSound != undefined && type.shootSound != Sounds.none) {
+  if (isPowerTurret && type.shootSound != undefined && type.shootSound != Sounds.none) {
     shotSound = type.shootSound;
   }
   shotSound.at(this.x, this.y, 1, shootSoundVolume);
 
-  type.create(this, this.team, this.x + tr.x, this.y + tr.y, angle);
-  tr.trns(this.rotation, baseRot, xR);
+  type.create(this, this.team, this.x + bulletDx, this.y + bulletDy, angle);
 
-  if (this.getPO().type == 'PowerTurret') {
-    let muzzleX = this.x + tr.x,
-      muzzleY = this.y + tr.y;
+  // Keep the old operation order exactly: muzzle coordinates were recalculated
+  // only after BulletType.create() returned.
+  const muzzleDx = Angles.trnsx(this.rotation, baseRot, xR),
+    muzzleDy = Angles.trnsy(this.rotation, baseRot, xR),
+    muzzleX = this.x + muzzleDx,
+    muzzleY = this.y + muzzleDy;
+
+  if (isPowerTurret) {
     if (type.shootEffect != undefined && type.shootEffect != Fx.none) {
       type.shootEffect.at(muzzleX, muzzleY, this.rotation, type.hitColor);
     }
@@ -2229,9 +2388,7 @@ uranium.t.baseBullet = function (type, angle) {
       type.smokeEffect.at(muzzleX, muzzleY, this.rotation, type.hitColor);
     }
   } else {
-    const muzzleX = this.x + tr.x,
-      muzzleY = this.y + tr.y,
-      muzzleSeed = (this.tile != null ? this.tile.pos() : 0) * 4099 + this.totalShots;
+    const muzzleSeed = (this.tile != null ? this.tile.pos() : 0) * 4099 + this.totalShots;
 
     uranium.vfxBudget.spawnEffect(
       uranium.getEffect('9x18-shot'),
@@ -2313,7 +2470,8 @@ uranium.t.baseUpdateTile = function (logicalTicks) {
   this.ensureRuntimeInitialized();
 
   for (let i = 0; i < logicalTicks; i++) {
-    this.runtimeFastTick();
+    this.advanceIdleHealthRuntimeTimer();
+    if (this.hasRuntimeFastWork()) this.runtimeFastTick(true);
   }
   this.baseMaintenanceUpdate(logicalTicks);
 
@@ -2361,6 +2519,7 @@ uranium.t.getSmartRegions = function () {
 };
 
 uranium.t.getRotationSpeed = function () {
+  if (this._rtCacheReady) return this._rtRotationSpeed;
   return (this.getP().rotateSpeed + this.getQD('rotateSpeed')) * this.getQD('rotateSpeedFactor');
 }
 
@@ -2369,7 +2528,7 @@ uranium.t.turnToTarget = function (targetRot) {
 }
 
 uranium.t.getTurretColor = function () {
-  return this.getQD('turretColor');
+  return this._rtCacheReady ? this._rtTurretColor : this.getQD('turretColor');
 };
 
 uranium.t.getMaxFastShots = function () {
@@ -2494,7 +2653,7 @@ uranium.addObjMethod('setBuildTurret', function (f) {
           return 4;
         },
         write(writer) {
-          uranium.tileMap = {};
+          uranium.clearLegacyTileMap();
           writer.i(data.lvl);
           writer.i(data.exp);
           writer.i(data.sheald);
@@ -2650,7 +2809,7 @@ uranium.addObjMethod('setBuildLaserTurret', function (f) {
           return 4;
         },
         write(writer) {
-          uranium.tileMap = {};
+          uranium.clearLegacyTileMap();
           writer.i(data.tempCore);
           writer.i(data.lvl);
           writer.i(data.exp);
@@ -2794,7 +2953,7 @@ uranium.addObjMethod('setBuildPowerTurret', function (f) {
           return 4;
         },
         write(writer) {
-          uranium.tileMap = {};
+          uranium.clearLegacyTileMap();
           writer.i(data.lvl);
           writer.i(data.exp);
           writer.i(data.sheald);
